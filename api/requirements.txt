@@ -1,0 +1,5 @@
+Flask
+Flask_cors
+Flask-MySql
+PyMySQL
+mysql-connector

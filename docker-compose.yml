@@ -1,0 +1,40 @@
+version: '3'
+services:
+  mysql:
+    container_name: db
+    image: mysql:5.7
+    entrypoint: ['/entrypoint.sh', '--character-set-server=utf8', '--collation-server=utf8_general_ci']
+    environment:
+      MYSQL_ROOT_PASSWORD: pass
+    ports:
+      - 3306:3306
+    volumes:
+      - ./data/:/docker-entrypoint-initdb.d
+      - ./DB/:/var/lib/mysql:rw
+    networks:
+      - default
+
+  www:
+      container_name: www
+      build: html/ .
+      image: soa/www:v1
+      ports:
+        - "8080:80"
+      volumes:
+        - ./html:/var/www/html/
+      links:
+        - mysql
+        - rest
+      networks:
+        - default
+
+  rest:
+      container_name: api
+      build: api/ .
+      image: soa/api:v1
+      ports:
+        - "5000:5000"
+      links:
+        - mysql
+      networks:
+        - default
