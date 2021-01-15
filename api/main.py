@@ -20,6 +20,23 @@ def get_user_by_email(_email):
         cursor.close()
         conn.close()
 
+def get_user_by_id(_id):
+    sqlQuery = f"SELECT * FROM users WHERE id = {_id}"
+    try:
+        print(f"quering for {sqlQuery}")
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(sqlQuery)
+        res = cursor.fetchone()
+        print(f"Got result from SQL {sqlQuery} = {res}")
+        return res
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+
 
 @app.route('/users', methods=['POST'])
 def add_user():
@@ -98,7 +115,7 @@ def update_user(id):
             cursor = conn.cursor()
             cursor.execute(sqlQuery, bindData)
             conn.commit()
-            response = jsonify('User updated successfully!')
+            response = jsonify(get_user_by_id(id))
             response.status_code = 200
             return response
         else:

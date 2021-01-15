@@ -12,7 +12,7 @@ function CallAPI($method, $url, $data = false)
             $is_json_payload = true;
             break;
         case "PUT":
-            curl_setopt($curl, CURLOPT_PUT, 1);
+            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
             $is_json_payload = true;
             break;
         default:

@@ -1,68 +1,58 @@
 <?php
 ob_start();
 session_start();
-require_once 'dbconnect.php';
+require_once 'api_client.php';
 
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit;
 }
 
+$rest_response = CallAPI("GET","http://rest:5000/users/".$_SESSION['user']);
+$loged_in_user = json_decode($rest_response);
+
 if (isset($_POST['Update'])) {
 
     $user_id = trim($_POST['id']);
     $title = trim($_POST['title']);
+    $email = trim($_POST['email']);
     $first_name = trim($_POST['first_name']);
     $sir_name = trim($_POST['sir_name']);
-    $email = trim($_POST['email']);
     $country = trim($_POST['country']);
     $city = trim($_POST['city']);
 
-    $fag = "I have run";
-    // check email exist or not
-    $stmt = $conn->prepare("SELECT email FROM users WHERE email=? AND id != ?");
-    $stmt->bind_param("si", $email, $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $stmt->close();
+    $rest_response = CallAPI("PUT","http://rest:5000/users/".$user_id);
+    $loged_in_user = json_decode($rest_response);
 
-    $fag = "I have run";
+    $payload = [
+        "title" => $title,
+        "first_name" => $first_name,
+        "sir_name" => $sir_name,
+        "email" => $email,
+        "country" => $country,
+        "city" => $city
+    ];
 
-    $count = $result->num_rows;
+    $json_payload = json_encode($payload);
+    $rest_response = CallAPI("PUT","http://rest:5000/users/".$user_id, $json_payload);
+    $response = json_decode($rest_response);
 
-    if ($count == 0) { // if email is not found update user
-
-        $fag = "I have run";
-        $update_stmt = $conn->prepare("UPDATE users SET title = ?, first_name = ?, sir_name = ?, email = ?, country = ?, city = ? WHERE id = ?");
-        $update_stmt->bind_param("ssssssi", $title, $first_name, $sir_name, $email, $country, $city, $user_id);
-
-        $result_statement = $update_stmt;
-        $res = $update_stmt->execute();//get result
-
-        $update_stmt->close();
-
-        $_SESSION['user'] = $user_id;
-        if (isset($_SESSION['user'])) {
-            print_r($_SESSION);
-            header("Location: user_profile.php?updated=true");
-            exit;
-        }
-         else {
-            $errTyp = "danger";
-            $errMSG = "Something went wrong, try again";
-        } 
-
-    } else {
+    if (is_null($response)) {
+        $errTyp = "danger";
+        $errMSG = "Someting really bad has happened";
+    } elseif (property_exists( $response, "message" )) {
         $errTyp = "warning";
-        $errMSG = "Email is already used";
+        $errMSG = $response->message;
+    } elseif (property_exists( $response, "id" )) {
+        $_SESSION['user'] = $response->id;
+        header("Location: user_profile.php?updated=true");
+        exit;
+    } else {
+        $errTyp = "danger";
+        $errMSG = "Unexpected responce";
     }
+}
 
-}
-else {
-    // select logged in users detail
-    $res = $conn->query("SELECT * FROM users WHERE id=" . $_SESSION['user']);
-    $userRow = mysqli_fetch_array($res, MYSQLI_ASSOC);
-}
 ?>
 
 <!DOCTYPE html>
@@ -74,7 +64,6 @@ else {
 </head>
 
 <body>
- 
  <nav class="navbar navbar-default navbar-fixed-top">
         <div class="container">
             <div class="navbar-header">
@@ -99,7 +88,7 @@ else {
                         aria-expanded="false">
                             <span
                                 class="glyphicon glyphicon-user"></span>&nbsp;Logged
-                            in: <?php echo $userRow['email']; ?>
+                            in: <?php echo $loged_in_user->email; ?>
                             &nbsp;<span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             <li><a href="logout.php?logout"><span class="glyphicon glyphicon-log-out"></span>&nbsp;Logout</a>
@@ -143,47 +132,48 @@ else {
                     }
                 ?>
                 
-                <input type="hidden" name="id" value = "<?php echo $userRow['id'] ?>" />
+                <input type="hidden" name="id" value = "<?php echo $loged_in_user->id ?>" />
                 <div class="form-group">
                     <div class="input-group">
                         <span>  Set Title: &nbsp; </span> 
-                        <label class="radio-inline"><input type="radio" name="title" value="Mr."  <?php echo $userRow['title'] == 'Mr.' ? 'checked' : '' ?> >Mr.</label>
-                        <label class="radio-inline"><input type="radio" name="title" value="Mrs." <?php echo $userRow['title'] == 'Mrs.' ? 'checked' : '' ?> >Mrs.</label>
+                        <label class="radio-inline"><input type="radio" name="title" value="Mr."  <?php echo $loged_in_user->title == 'Mr.' ? 'checked' : '' ?> >Mr.</label>
+                        <label class="radio-inline"><input type="radio" name="title" value="Mrs." <?php echo $loged_in_user->title == 'Mrs.' ? 'checked' : '' ?> >Mrs.</label>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
-                        <input type="text" name="first_name" class="form-control" value="<?php echo $userRow['first_name'] ?>" required />
+                        <input type="text" name="first_name" class="form-control" value="<?php echo $loged_in_user->first_name ?>" required />
                     </div>
                 </div>
 
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
-                        <input type="text" name="sir_name" class="form-control" value="<?php echo $userRow['sir_name'] ?>" required />
+                        <input type="text" name="sir_name" class="form-control" value="<?php echo $loged_in_user->sir_name ?>" required />
                     </div>
                 </div>
 
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon"><span class="glyphicon glyphicon-envelope"></span></span>
-                        <input type="email" name="email" class="form-control" value="<?php echo $userRow['email'] ?>" required />
+                        <input type="email" disabled class="form-control" value="<?php echo $loged_in_user->email ?>" />
+                        <input type="hidden" name="email" class="form-control" value="<?php echo $loged_in_user->email ?>" />
                     </div>
                 </div>
 
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon"><span class="glyphicon glyphicon-globe"></span></span>
-                        <input type="text" name="country" class="form-control" value="<?php echo $userRow['country'] ?>" required />
+                        <input type="text" name="country" class="form-control" value="<?php echo $loged_in_user->country ?>" required />
                     </div>
                 </div>
 
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon"><span class="glyphicon glyphicon-globe"></span></span>
-                        <input type="text" name="city" class="form-control" value="<?php echo $userRow['city'] ?>" required />
+                        <input type="text" name="city" class="form-control" value="<?php echo $loged_in_user->city ?>" required />
                     </div>
                 </div>
 
