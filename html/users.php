@@ -65,7 +65,6 @@
                 <ul class="nav navbar-nav">
                     <li><a href="index.php">Home</a></li>
                     <li class="active"><a href="#">Users</a></li>
-                    <li><a href="#">Third Link</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
 
@@ -157,7 +156,7 @@
                     echo "<td> $user->city </td>";
                     echo "<td> $user->email </td>";
                     if ($loged_in_user->is_admin){
-                        echo "<td><a href='delete_user.php?id={$email->id}' onclick=\"return confirm('Are you SURE you want to delete {$email->first_name} {$email->sir_name}? ')\">delete</a> </td>";
+                        echo "<td><a href='delete_user.php?id={$user->id}' onclick=\"return confirm('Are you SURE you want to delete {$user->first_name} {$user->sir_name}? ')\">delete</a> </td>";
                     }
                     echo "</tr>";
                 }

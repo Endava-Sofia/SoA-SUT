@@ -16,6 +16,7 @@ function CallAPI($method, $url, $data = false)
             $is_json_payload = true;
             break;
         default:
+            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
             if ($data)
                 $url = sprintf("%s?%s", $url, http_build_query($data));
     }

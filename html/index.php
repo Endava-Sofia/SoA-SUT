@@ -39,7 +39,6 @@ $loged_in_user = json_decode($rest_response);
             <ul class="nav navbar-nav">
                 <li class="active"><a href="#">Home</a></li>
                 <li><a href="users.php">Users</a></li>
-                <li><a href="#">Third Link</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
 

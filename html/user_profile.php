@@ -91,7 +91,6 @@ else {
                 <ul class="nav navbar-nav">
                     <li><a href="index.php">Home</a></li>
                     <li><a href="users.php">Users</a></li>
-                    <li><a href="#">Third Link</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
 
