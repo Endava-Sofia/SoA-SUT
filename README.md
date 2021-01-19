@@ -4,7 +4,7 @@
 
 1. Install docker
 2. Clone the repo 
-3. Ensure sub-derictory DB exists under the project root 
+3. Ensure sub-derictory DB exists under the project root. If not create an empty directory DB under the project root 
 5. Run `docker-compose up -d` This will fetch PHP, MySQL and PYTHON Docker images, launch apache on http://localhost:8080, REST API on http://localhost:5000 and MySQL on port 3306
 5.1. Note that during building up Docker will ask for permissions to store data on you file system. Allow all requests.
 6. If you want to stop the service just run `docker-compose down`
