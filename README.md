@@ -18,7 +18,7 @@
 
  - Create User
 ```
-   POST /user
+   POST /users
    {
       "title" : "<Mr./Mrs.>",
       "first_name" : "<user_firstName>",
@@ -26,7 +26,8 @@
       "country" : "<user_country>",
       "city" : "<user_city>",
       "email": "<user_email>",
-      "password": "<hashed_password>"
+      "password": "<hashed_password>",
+      "is_admin": <true/false>
    }
 ```
 
