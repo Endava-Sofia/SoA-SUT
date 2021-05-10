@@ -1,6 +1,6 @@
 # This is a SUT application created for the means of Endava SoA
 
-## Installation using docker(recommended)
+## Installation using docker(mandatory)
 
 1. Install docker
 2. Clone the repo 
@@ -8,6 +8,10 @@
 5. Run `docker-compose up -d` This will fetch PHP, MySQL and PYTHON Docker images, launch apache on http://localhost:8080, REST API on http://localhost:5000 and MySQL on port 3306
 5.1. Note that during building up Docker will ask for permissions to store data on you file system. Allow all requests.
 6. If you want to stop the service just run `docker-compose down`
+
+**Note** 
+	If you have troubles running Docker, you'll need to check if Virtualization is enabled in the BIOS settings.
+	Video on how to check that [here](https://www.youtube.com/watch?v=1HoIj84zUp0)
 
 ## WEB part
 
