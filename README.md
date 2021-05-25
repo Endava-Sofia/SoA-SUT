@@ -13,7 +13,7 @@
 	If you have troubles running Docker, you'll need to check if Virtualization is enabled in the BIOS settings.
 	Video on how to check that [here](https://www.youtube.com/watch?v=1HoIj84zUp0)
 	
-## DB connesction
+## DB connection
  - Use your favorite sql client application to connecto to localhost:3306 and credentials `root/pass`
 
 
