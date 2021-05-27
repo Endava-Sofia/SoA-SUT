@@ -14,7 +14,7 @@
 	Video on how to check that [here](https://www.youtube.com/watch?v=1HoIj84zUp0)
 	
 ## DB connection
- - Use your favorite sql client application to connecto to localhost:3306 and credentials `root/pass`
+ - Use your favorite sql client to connect to http://localhost:3306 and credentials `root/pass`
 
 
 ## WEB part
