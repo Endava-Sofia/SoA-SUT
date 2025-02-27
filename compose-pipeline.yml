@@ -1,0 +1,30 @@
+trigger: none
+
+variables: 
+ - group: soa-sut-variables
+  
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: AzureCLI@2
+  displayName: "Compose container apps"
+  inputs:
+    azureSubscription: $(serviceConnection)
+    scriptType: 'pscore'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az containerapp compose create -g $(resourceGroup) --environment $(containersEnvironment) --compose-file-path docker-compose.yml --registry-server $(registryServer) --registry-password $(registryPassword) --registry-username $(registryUser)'
+- task: AzureCLI@2
+  displayName: "Configure mySql ingress transport"
+  inputs:
+    azureSubscription: $(serviceConnection)
+    scriptType: 'pscore'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az containerapp ingress update -n mysql -g $(resourceGroup) --target-port 3306 --transport tcp --exposed-port 3306 --type external'
+- task: AzureCLI@2
+  displayName: "Configure API rest ingress transport"
+  inputs:
+    azureSubscription: $(serviceConnection)
+    scriptType: 'pscore'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az containerapp ingress update -n rest -g $(resourceGroup) --target-port 5000 --transport http --exposed-port 5000 --type external'

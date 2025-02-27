@@ -75,3 +75,110 @@
       "password": "<hashed_password>"
    }
 ```
+
+## Miscs
+
+- Get Countries:
+```
+GET /countries
+```
+
+returns:
+  ```
+  [
+   "Bulgaria",
+   "Romania",
+   "Greece",
+   "Germany",
+   "UK",
+   "USA"
+  ]
+  ```
+
+- Get cities by Country name
+
+```
+   GET /cities/<country_name>
+
+   GET /cities/Bulgaria
+```
+
+  returns:
+  ```
+  [
+   "Sofia",
+   "Sopot",
+   "Elin Pelin",
+   ...
+  ]
+  ```
+
+
+ - List Skills (for the www aims)
+```
+   GET /skills
+```
+
+   returns:
+   ```
+   [
+      {
+         "id": 25,
+         "skill_category": "Quality Assurance",
+         "skill_description": "Coordinating and facilitating UAT sessions with stakeholders to validate that the software meets the",
+         "skill_name": "User Acceptance Testing"
+      },
+   ....
+   ]
+   ```
+
+- Search user
+
+```
+   POST /search/users
+
+{
+   "skills": ["string", "string"],
+   "countries": ["string", "string"],
+   "cities": ["string", "string"]
+}
+
+```
+
+  - Example
+      ```
+      POST /search/users
+
+         {
+            "skills": ["string", "string"],
+            "countries": ["string", "string"],
+            "cities": ["string", "string"]
+         }
+      ```   
+
+
+      returns:
+      ```
+      [
+         {
+            "city": "Sofia",
+            "country": "Bulgaria",
+            "email": "idimitrov@automation.com",
+            "first_name": "Ivan",
+            "id": 2,
+            "sir_name": "Dimotrov",
+            "skill_category": "Programming",
+            "skill_name": "Java"
+         },
+         {
+            "city": "Kardjali",
+            "country": "Bulgaria",
+            "email": "zavramov@automation.com",
+            "first_name": "Zahari",
+            "id": 6,
+            "sir_name": "Avramov",
+            "skill_category": "Welding",
+            "skill_name": "Welding"
+         }
+      ]
+      ```

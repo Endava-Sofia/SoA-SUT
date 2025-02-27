@@ -33,7 +33,7 @@ if (isset($_POST['signup'])) {
     ];
 
     $json_payload =  json_encode($payload);
-    $api_result = CallAPI("POST", "http://rest:5000/users", $json_payload);
+    $api_result = CallAPI("POST", "http://rest/users", $json_payload);
     $response = json_decode($api_result);
 
     if (is_null($response)) {
@@ -54,130 +54,153 @@ if (isset($_POST['signup'])) {
 }
 ?>
 <!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Registration</title>
-    <link rel="stylesheet" href="assets/css/bootstrap.min.css" type="text/css"/>
-    <link rel="stylesheet" href="assets/css/style.css" type="text/css"/>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 </head>
-
-<script>
-function setCityRequired(value) {
-    if (value){
-        document.getElementById("city").required = true;
-    } else{
-        document.getElementById("city").required = false;
-    }
-}
-</script>
 <body>
 
-<div class="container">
-
-    <div id="login-form">
-        <form method="post" autocomplete="off">
-
-            <div class="col-md-12">
-
-                <div class="form-group">
-                    <h2 class="">Register for our School of Automation</h2>
-                </div>
-
-                <div class="form-group">
-                    <hr/>
-                </div>
-
-                <?php
-                if (isset($errMSG)) {
-
-                    ?>
-                    <div class="form-group">
-                        <div class="alert alert-<?php echo ($errTyp == "success") ? "success" : $errTyp; ?>">
-                            <span class="glyphicon glyphicon-info-sign"></span> <?php echo $errMSG; ?>
-                        </div>
-                    </div>
-                    <?php
-                }
-                ?>
-
-                <div class="form-group">
-                    <div class="input-group">
-                        <span>  Set Title: &nbsp; </span> 
-                        <label class="radio-inline"><input type="radio" name="title" value="Mr." checked onclick="setCityRequired(true)">Mr.</label>
-                        <label class="radio-inline"><input type="radio" name="title" value="Mrs." onclick="setCityRequired(false)">Mrs.</label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="input-group">
-                        <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
-                        <input type="text" name="first_name" class="form-control" placeholder="Enter First Name" pattern="[a-zA-Z]{1,15}" required/>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="input-group">
-                        <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
-                        <input type="text" name="sir_name" class="form-control" placeholder="Enter Sir Name" pattern="[^0-9]{2,15}" required/>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="input-group">
-                        <span class="input-group-addon"><span class="glyphicon glyphicon-envelope"></span></span>
-                        <input type="email" name="email" class="form-control" placeholder="Enter Email" required/>
-                    </div>
-                </div>
-
-                
-                <div class="form-group">
-                    <div class="input-group">
-                        <span class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></span>
-                        <input type="password" name="pass" class="form-control" placeholder="Enter Password"
-                               required="false"/>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="input-group">
-                        <span class="input-group-addon"><span class="glyphicon glyphicon-globe"></span></span>
-                        <input type="text" name="country" class="form-control" placeholder="Enter Country" required=/>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="input-group">
-                        <span class="input-group-addon"><span class="glyphicon glyphicon-globe"></span></span>
-                        <input type="text" name="city" id="city" class="form-control" placeholder="Enter City" required/>
-                    </div>
-                </div>
-
-                <div class="checkbox">
-                    <label><input type="checkbox" id="TOS" value="This"><a href="#">I agree with
-                            terms of service</a></label>
-                </div>
-
-                <div class="form-group">
-                    <button type="submit" class="btn btn-block btn-primary" name="signup" id="reg">Register</button>
-                </div>
-
-                <div class="form-group">
-                    <hr/>
-                </div>
-
-                <div class="form-group">
-                    <a href="login.php" type="button" class="btn btn-block btn-success" name="btn-login">Login</a>
-                </div>
-
-            </div>
-
-        </form>
+<!-- Navigation Bar-->
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">Endava SoA SUT</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.php">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="login.php">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="register.php">Register</a>
+                </li>
+            </ul>
+        </div>
     </div>
+</nav>
 
+<div class="container mt-5 pt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Register</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" autocomplete="off" class="needs-validation" novalidate>
+                        <?php if (isset($errMSG)) { ?>
+                            <div class="alert alert-<?php echo $errTyp; ?>">
+                                <?php echo $errMSG; ?>
+                            </div>
+                        <?php } ?>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <select name="title" class="form-select" id="title" required>
+                                <option value="Mr.">Mr.</option>
+                                <option value="Mrs.">Mrs.</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a title.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" name="first_name" class="form-control" id="first_name" 
+                                   value="<?php echo isset($first_name) ? htmlspecialchars($first_name) : ''; ?>"
+                                   pattern="[a-zA-Z]{1,15}" required>
+                            <div class="invalid-feedback">Please enter a valid first name (letters only, 1-15 characters).</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sir_name" class="form-label">Surname</label>
+                            <input type="text" name="sir_name" class="form-control" id="sir_name" 
+                                   value="<?php echo isset($sir_name) ? htmlspecialchars($sir_name) : ''; ?>"
+                                   pattern="[^0-9]{2,15}" required>
+                            <div class="invalid-feedback">Please enter a valid surname (no numbers, 2-15 characters).</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" id="email" 
+                                   value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" required>
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="pass" class="form-label">Password</label>
+                            <input type="password" name="pass" class="form-control" id="pass" required>
+                            <div class="invalid-feedback">Please enter a password.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Country</label>
+                            <input type="text" name="country" class="form-control" id="country" 
+                                   value="<?php echo isset($country) ? htmlspecialchars($country) : ''; ?>" required>
+                            <div class="invalid-feedback">Please enter your country.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" name="city" class="form-control" id="city" 
+                                   value="<?php echo isset($city) ? htmlspecialchars($city) : ''; ?>" required>
+                            <div class="invalid-feedback">Please enter your city.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="tos" required>
+                                <label class="form-check-label" for="tos">I agree with the terms of service</label>
+                                <div class="invalid-feedback">You must agree to the terms of service.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="signup" class="btn btn-primary">Register</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <a href="login.php" class="btn btn-link">Already have an account? Login here</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<script type="text/javascript" src="assets/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="assets/js/tos.js"></script>
+
+<!-- Scripts -->
+<script src="assets/js/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// Form validation
+(() => {
+    'use strict'
+
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    const forms = document.querySelectorAll('.needs-validation')
+
+    // Loop over them and prevent submission
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
 
 </body>
 </html>

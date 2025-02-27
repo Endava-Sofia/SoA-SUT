@@ -13,3 +13,23 @@
 #wrapper{
 	padding-top:50px;
 }
+
+.lm-px-5 {
+    margin-left: 5px;
+}
+
+.h-20 {
+    height: 20%;
+}
+
+.container-border{
+	border: 1px solid #ccc;
+	border-radius: 15px;  
+	}
+   
+.min-h-200{
+	
+	min-height: 200px;
+	max-height: 200px;
+	overflow: auto;
+}
