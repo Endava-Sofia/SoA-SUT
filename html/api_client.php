@@ -9,7 +9,7 @@ function getApiBaseUrl() {
         return 'http://localhost:5000';
     }
     // In Azure or other environments, use the service name
-    return 'http://rest:5000';
+    return 'http://rest';
 }
 
 function CallAPI($method, $url, $data = false)
