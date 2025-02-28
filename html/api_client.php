@@ -2,11 +2,11 @@
 
 function getApiBaseUrl() {
     // Check if running locally
-    $hostname = gethostname();
-    if (strpos($hostname, 'DESKTOP') !== false 
+    $hostname = $_SERVER['HTTP_HOST'];
+    if (strpos($hostname, '192.168.127.1') !== false 
     || strpos($hostname, 'localhost') !== false
     || strpos($hostname, '127.0.0.1') !== false) {
-        return 'http://localhost:5000';
+        return 'http://rest:5000';
     }
     // In Azure or other environments, use the service name
     return 'http://rest';

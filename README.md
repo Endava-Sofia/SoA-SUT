@@ -12,7 +12,7 @@ The application consists of three main components running in Docker containers:
 
 ## Installation Requirements
 
-- Docker Desktop / Rancher Desktop
+- Docker Desktop / Rancher Desktop (*use moby Container Engine)
 - Git
 
 ## Quick Start
@@ -21,7 +21,7 @@ The application consists of three main components running in Docker containers:
 2. Navigate to the project directory
 3. Run the following command to start all services locally:
 ```bash
-docker-compose -f docker-compose-v2.yml up
+docker compose -f docker-compose-v2.yml up -d
 ```
 
 ## Application Access
@@ -52,7 +52,7 @@ Content-Type: application/json
     "country": "string",
     "city": "string",
     "email": "string",
-    "password": "<hashed_password>", //password hashing using SHA256
+    "password": "string",
     "is_admin": boolean
 }
 ```
@@ -89,7 +89,7 @@ Content-Type: application/json
 
 {
     "email": "string",
-    "password": "<hashed_password>", //password hashing using SHA256
+    "password": "string"
 }
 ```
 
