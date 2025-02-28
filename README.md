@@ -1,184 +1,556 @@
-# This is a SUT application created for the means of Endava SoA
+# SoA SUT Application
 
-## Installation using docker(mandatory)
+A web application with user management capabilities, featuring a PHP frontend, Python REST API, and MySQL database.
 
-1. Install docker
-2. Clone the repo 
-3. Ensure sub-derictory DB exists under the project root. If not create an empty directory DB under the project root 
-5. Run `docker-compose up -d` This will fetch PHP, MySQL and PYTHON Docker images, launch apache on http://localhost:8080, REST API on http://localhost:5000 and MySQL on port 3306
-5.1. Note that during building up Docker will ask for permissions to store data on you file system. Allow all requests.
-6. If you want to stop the service just run `docker-compose down`
+## System Architecture
 
-**Note** 
-	If you have troubles running Docker, you'll need to check if Virtualization is enabled in the BIOS settings.
-	Video on how to check that [here](https://www.youtube.com/watch?v=1HoIj84zUp0)
-	
-## DB connection
- - Use your favorite sql client to connect to http://localhost:3306 and credentials `root/pass`
+The application consists of three main components running in Docker containers:
 
+1. **Frontend (PHP/Apache)**: Serves the web interface on port 8080
+2. **REST API (Python/Flask)**: Handles business logic and data operations on port 5000
+3. **Database (MySQL)**: Stores application data on port 3306
 
-## WEB part
+## Installation Requirements
 
- - Note that application comes with pre registered users and one admin. All users have password `pass123`. You may check their specifics from DB.
- - Admin user is  `admin@automation.com`
+- Docker Desktop / Rancher Desktop
+- Git
 
-## REST API end points:
+## Quick Start
 
- - Create User
+1. Clone the repository
+2. Navigate to the project directory
+3. Run the following command to start all services locally:
+```bash
+docker-compose -f docker-compose-v2.yml up
 ```
-   POST /users
-   {
-      "title" : "<Mr./Mrs.>",
-      "first_name" : "<user_firstName>",
-      "sir_name" : "<user_surName>",
-      "country" : "<user_country>",
-      "city" : "<user_city>",
-      "email": "<user_email>",
-      "password": "<hashed_password>",
-      "is_admin": <true/false>
-   }
-```
+## Application Access
+- http://localhost:8080
+- Default password for all pre-registered users: pass123
+- Admin account: admin@automation.com
 
- - List Users
-```
-   GET /users
-```
+## Database Access
+- Host: localhost
+- Port: 3306
+- Username: root
+- Password: pass
+- Connection URL: mysql://localhost:3306
 
- - List User details
-```
-   GET /users/<:id>
-```
-
- - Delete User
-```
-   DELETE /users/<:id>
-```
-
- - Update User
-```
-   PUT /users/<:id>
-   {
-      "title" : "<Mr./Mrs.>",
-      "first_name" : "<user_firstName>",
-      "sir_name" : "<user_surName>",
-      "country" : "<user_country>",
-      "city" : "<user_city>",
-      "email": "<user_email>"
-   }
-```
-
- - Login with user (for the www aims)
-```
-   POST /login
-   {
-      "email": "<user_email>",
-      "password": "<hashed_password>"
-   }
-```
-
-## Miscs
-
-- Get Countries:
-```
-GET /countries
-```
-
-returns:
-  ```
-  [
-   "Bulgaria",
-   "Romania",
-   "Greece",
-   "Germany",
-   "UK",
-   "USA"
-  ]
-  ```
-
-- Get cities by Country name
-
-```
-   GET /cities/<country_name>
-
-   GET /cities/Bulgaria
-```
-
-  returns:
-  ```
-  [
-   "Sofia",
-   "Sopot",
-   "Elin Pelin",
-   ...
-  ]
-  ```
-
-
- - List Skills (for the www aims)
-```
-   GET /skills
-```
-
-   returns:
-   ```
-   [
-      {
-         "id": 25,
-         "skill_category": "Quality Assurance",
-         "skill_description": "Coordinating and facilitating UAT sessions with stakeholders to validate that the software meets the",
-         "skill_name": "User Acceptance Testing"
-      },
-   ....
-   ]
-   ```
-
-- Search user
-
-```
-   POST /search/users
+## API Endpoints
+- API: http://localhost:5000
+### User Management 
+#### Create User
+``` http
+POST /users
+Content-Type: application/json
 
 {
-   "skills": ["string", "string"],
-   "countries": ["string", "string"],
-   "cities": ["string", "string"]
+    "title": "Mr./Mrs.",
+    "first_name": "string",
+    "sir_name": "string",
+    "country": "string",
+    "city": "string",
+    "email": "string",
+    "password": "string",
+    "is_admin": boolean
 }
+```
+#### Get All Users
+``` http
+GET /users
+```
+#### Get User Details
+```http
+GET /users/{id}
+```
+#### Update User
+```http
+PUT /users/{id}
+Content-Type: application/json
 
+{
+    "title": "Mr./Mrs.",
+    "first_name": "string",
+    "sir_name": "string",
+    "country": "string",
+    "city": "string",
+    "email": "string"
+}
+```
+#### Delete User
+```http
+DELETE /users/{id}
+```
+#### User Authentication
+```http
+POST /login
+Content-Type: application/json
+
+{
+    "email": "string",
+    "password": "string"
+}
 ```
 
-  - Example
-      ```
-      POST /search/users
+### Location Data
+#### Get Countries
+```http
+GET /countries
+```
+Response:
+```json
+[
+    "Bulgaria",
+    "Romania",
+    "Greece",
+    "Germany",
+    "UK",
+    "USA"
+]
+```
+#### Get Cities by Country
+```http
+GET /cities/{country_name}
+```
+Response:
+```json
+[
+    "Sofia",
+    "Sopot",
+    "Elin Pelin"
+]
+```
 
-         {
-            "skills": ["string", "string"],
-            "countries": ["string", "string"],
-            "cities": ["string", "string"]
-         }
-      ```   
+### Skills Management 
+#### Get All Skills
+```http
+GET /skills
+```
+Response:
+```json
+[
+    {
+        "id": 25,
+        "skill_name": "User Acceptance Testing",
+        "skill_category": "Quality Assurance",
+        "skill_description": "Coordinating and facilitating UAT sessions with stakeholders"
+    }
+]
+```
 
+## Trae AI
+Used 24 References
 
-      returns:
-      ```
-      [
-         {
-            "city": "Sofia",
-            "country": "Bulgaria",
-            "email": "idimitrov@automation.com",
-            "first_name": "Ivan",
-            "id": 2,
-            "sir_name": "Dimotrov",
-            "skill_category": "Programming",
-            "skill_name": "Java"
-         },
-         {
-            "city": "Kardjali",
-            "country": "Bulgaria",
-            "email": "zavramov@automation.com",
-            "first_name": "Zahari",
-            "id": 6,
-            "sir_name": "Avramov",
-            "skill_category": "Welding",
-            "skill_name": "Welding"
-         }
-      ]
-      ```
+I'll analyze the project structure and help update the README.md file with more accurate and detailed information. Based on the code snippets provided, here's an improved version of the README.md:
+
+```markdown
+# SoA SUT Application
+
+A web application with user management capabilities, featuring a PHP frontend, Python REST API, and MySQL database.
+
+## System Architecture
+
+The application consists of three main components running in Docker containers:
+
+1. **Frontend (PHP/Apache)**: Serves the web interface on port 8080
+2. **REST API (Python/Flask)**: Handles business logic and data operations on port 5000
+3. **Database (MySQL)**: Stores application data on port 3306
+
+## Installation Requirements
+
+- Docker Desktop
+- Git
+
+## Quick Start
+
+1. Clone the repository
+2. Navigate to the project directory
+3. Create an empty `DB` directory in the project root (if not exists)
+4. Run the following command to start all services:
+```bash
+docker-compose up -d
+ ```
+```
+
+5. Access the application at http://localhost:8080
+6. To stop all services:
+```bash
+docker-compose down
+ ```
+
+Note : Ensure hardware virtualization is enabled in your BIOS settings if you experience Docker-related issues.
+
+## Database Access
+- Host: localhost
+- Port: 3306
+- Username: root
+- Password: pass
+- Connection URL: mysql://localhost:3306
+## User Authentication
+- Default password for all pre-registered users: pass123
+- Admin account: admin@automation.com
+## API Endpoints
+### User Management Create User
+```http
+POST /users
+Content-Type: application/json
+
+{
+    "title": "Mr./Mrs.",
+    "first_name": "string",
+    "sir_name": "string",
+    "country": "string",
+    "city": "string",
+    "email": "string",
+    "password": "string",
+    "is_admin": boolean
+}
+ ```
+ Get All Users
+```http
+GET /users
+ ```
+ Get User Details
+```http
+GET /users/{id}
+ ```
+ Update User
+```http
+PUT /users/{id}
+Content-Type: application/json
+
+{
+    "title": "Mr./Mrs.",
+    "first_name": "string",
+    "sir_name": "string",
+    "country": "string",
+    "city": "string",
+    "email": "string"
+}
+ ```
+ Delete User
+```http
+DELETE /users/{id}
+ ```
+ User Authentication
+```http
+POST /login
+Content-Type: application/json
+
+{
+    "email": "string",
+    "password": "string"
+}
+ ```
+
+### Location Data Get Countries
+```http
+GET /countries
+ ```
+
+Response:
+
+```json
+[
+    "Bulgaria",
+    "Romania",
+    "Greece",
+    "Germany",
+    "UK",
+    "USA"
+]
+ ```
+ Get Cities by Country
+```http
+GET /cities/{country_name}
+ ```
+
+Response:
+
+```json
+[
+    "Sofia",
+    "Sopot",
+    "Elin Pelin"
+]
+ ```
+
+### Skills Management Get All Skills
+```http
+GET /skills
+ ```
+
+Response:
+
+```json
+[
+    {
+        "id": 25,
+        "skill_name": "User Acceptance Testing",
+        "skill_category": "Quality Assurance",
+        "skill_description": "Coordinating and facilitating UAT sessions with stakeholders"
+    }
+]
+ ```
+```
+
+### Search Functionality Search Users
+```http
+POST /search/users
+Content-Type: application/json
+
+{
+    "skills": ["skill1", "skill2"],
+    "countries": ["country1", "country2"],
+    "cities": ["city1", "city2"]
+}
+ ```
+
+Response:
+
+```json
+[
+    {
+        "id": 2,
+        "first_name": "Ivan",
+        "sir_name": "Dimotrov",
+        "email": "idimitrov@automation.com",
+        "country": "Bulgaria",
+        "city": "Sofia",
+        "skill_name": "Java",
+        "skill_category": "Programming"
+    }
+]
+ ```
+```
+
+## Technologies Used
+- Frontend: PHP 8.2, Apache, Bootstrap 5
+- API: Python 3, Flask
+- Database: MySQL 9.0.1
+- Container: Docker
+## Development
+The project uses a microservices architecture with three main services:
+
+- www : PHP frontend service
+- rest : Python REST API service
+- mysql : Database service
+All services are connected through a Docker bridge network named soa-network .
+
+```plaintext
+
+This updated README.md provides:
+1. Better structure and organization
+2. More detailed API documentation
+3. Clear installation instructions
+4. Technology stack information
+5. Development architecture details
+6. Improved formatting and readability
+
+The main improvements include:
+- Added system architecture overview
+- Clarified technology versions
+- Better organized API documentation
+- Added development section
+- Improved formatting for better readability
+- Added more detailed response examples
+ ```
+```
+
+## Georgi Kokonov
+Copy
+
+Delete
+
+Make the changes to the readme.md file
+
+## Trae AI
+I'll help you update the README.md file. I'll provide the complete updated content that you can directly save to the file.
+
+```markdown
+# SoA SUT Application
+
+A web application with user management capabilities, featuring a PHP frontend, Python REST API, and MySQL database.
+
+## System Architecture
+
+The application consists of three main components running in Docker containers:
+
+1. **Frontend (PHP/Apache)**: Serves the web interface on port 8080
+2. **REST API (Python/Flask)**: Handles business logic and data operations on port 5000
+3. **Database (MySQL)**: Stores application data on port 3306
+
+## Installation Requirements
+
+- Docker Desktop
+- Git
+
+## Quick Start
+
+1. Clone the repository
+2. Navigate to the project directory
+3. Create an empty `DB` directory in the project root (if not exists)
+4. Run the following command to start all services:
+```bash
+docker-compose up -d
+ ```
+```
+
+5. Access the application at http://localhost:8080
+6. To stop all services:
+```bash
+docker-compose down
+ ```
+
+Note : Ensure hardware virtualization is enabled in your BIOS settings if you experience Docker-related issues.
+
+## Database Access
+- Host: localhost
+- Port: 3306
+- Username: root
+- Password: pass
+- Connection URL: mysql://localhost:3306
+## User Authentication
+- Default password for all pre-registered users: pass123
+- Admin account: admin@automation.com
+## API Endpoints
+### User Management Create User
+```http
+POST /users
+Content-Type: application/json
+
+{
+    "title": "Mr./Mrs.",
+    "first_name": "string",
+    "sir_name": "string",
+    "country": "string",
+    "city": "string",
+    "email": "string",
+    "password": "string",
+    "is_admin": boolean
+}
+ ```
+ Get All Users
+```http
+GET /users
+ ```
+ Get User Details
+```http
+GET /users/{id}
+ ```
+ Update User
+```http
+PUT /users/{id}
+Content-Type: application/json
+
+{
+    "title": "Mr./Mrs.",
+    "first_name": "string",
+    "sir_name": "string",
+    "country": "string",
+    "city": "string",
+    "email": "string"
+}
+ ```
+ Delete User
+```http
+DELETE /users/{id}
+ ```
+ User Authentication
+```http
+POST /login
+Content-Type: application/json
+
+{
+    "email": "string",
+    "password": "string"
+}
+ ```
+
+### Location Data Get Countries
+```http
+GET /countries
+ ```
+
+Response:
+
+```json
+[
+    "Bulgaria",
+    "Romania",
+    "Greece",
+    "Germany",
+    "UK",
+    "USA"
+]
+ ```
+ Get Cities by Country
+```http
+GET /cities/{country_name}
+ ```
+
+Response:
+
+```json
+[
+    "Sofia",
+    "Sopot",
+    "Elin Pelin"
+]
+```
+
+### Skills Management Get All Skills
+```http
+GET /skills
+```
+Response:
+```json
+[
+    {
+        "id": 25,
+        "skill_name": "User Acceptance Testing",
+        "skill_category": "Quality Assurance",
+        "skill_description": "Coordinating and facilitating UAT sessions with stakeholders"
+    }
+]
+```
+
+### Search Functionality 
+#### Search Users
+``` http
+POST /search/users
+Content-Type: application/json
+
+{
+    "skills": ["skill1", "skill2"],
+    "countries": ["country1", "country2"],
+    "cities": ["city1", "city2"]
+}
+```
+Response:
+```json
+[
+    {
+        "id": 2,
+        "first_name": "Ivan",
+        "sir_name": "Dimotrov",
+        "email": "idimitrov@automation.com",
+        "country": "Bulgaria",
+        "city": "Sofia",
+        "skill_name": "Java",
+        "skill_category": "Programming"
+    }
+]
+```
+## Technologies Used
+- Frontend: PHP 8.2, Apache, Bootstrap 5
+- API: Python 3, Flask
+- Database: MySQL 9.0.1
+- Container: Docker
+
+## Development
+The project uses a microservices architecture with three main services:
+- www : PHP frontend service
+- rest : Python REST API service
+- mysql : Database service
+
+All services are connected through a Docker bridge network named soa-network localy. And also can be deployed in Azure DevOps.
