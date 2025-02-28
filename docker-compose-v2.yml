@@ -1,0 +1,42 @@
+version: '3'
+services:
+  mysql:
+    container_name: db
+    build: data/
+    image: soa-mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - target: 3306
+        published: 3306
+        protocol: tcp
+        mode: ingress
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+    networks:
+      - soa-network
+
+  www:
+      container_name: www
+      build: html/
+      image: soa-www
+      ports:
+        - "8080:80"
+      networks:
+        - soa-network
+
+  rest:
+      container_name: api
+      build: api/
+      image: soa-api
+      ports:
+        - "5000:5000"
+      networks:
+        - soa-network
+
+networks:
+  soa-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

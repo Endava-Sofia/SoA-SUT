@@ -33,7 +33,7 @@ if (isset($_POST['signup'])) {
     ];
 
     $json_payload =  json_encode($payload);
-    $api_result = CallAPI("POST", "http://rest/users", $json_payload);
+    $api_result = CallAPI("POST", "/users", $json_payload);
     $response = json_decode($api_result);
 
     if (is_null($response)) {

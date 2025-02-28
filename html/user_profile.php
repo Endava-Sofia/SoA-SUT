@@ -8,7 +8,7 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
-$rest_response = CallAPI("GET", "http://rest/users/" . $_SESSION['user']);
+$rest_response = CallAPI("GET","/users/".$_SESSION['user']);
 $loged_in_user = json_decode($rest_response);
 
 if (isset($_POST['Update'])) {
@@ -37,7 +37,7 @@ if (isset($_POST['Update'])) {
         );
 
         $json_payload = json_encode($payload);
-        $rest_response = CallAPI("PUT", "http://rest/users/" . $user_id, $json_payload);
+        $rest_response = CallAPI("PUT", "/users/" . $user_id, $json_payload);
         
         if ($rest_response === false) {
             $errTyp = "danger";

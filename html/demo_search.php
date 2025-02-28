@@ -9,10 +9,10 @@ if (!isset($_SESSION['user'])) {
 }
 // select logged in users detail
 
-$rest_response = CallAPI("GET","http://rest/users/".$_SESSION['user']);
+$rest_response = CallAPI("GET", "/users/".$_SESSION['user']);
 $loged_in_user = json_decode($rest_response);
 
-if  ($rest_response = CallAPI("GET","http://rest/countries")) {
+if  ($rest_response = CallAPI("GET", "/countries")) {
     // Some variables we need for the table.
     $available_countries = json_decode($rest_response);
 }

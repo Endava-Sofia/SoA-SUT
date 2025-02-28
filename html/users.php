@@ -35,7 +35,7 @@
         ];
 
         $json_payload = json_encode($payload);
-        $api_result = CallAPI("POST", "http://rest/users", $json_payload);
+        $api_result = CallAPI("POST", "/users", $json_payload);
         $response = json_decode($api_result);
 
         $result = ["status" => "error", "message" => "Unable to connect to the user service. Please try again later."];
@@ -55,7 +55,7 @@
         header('Content-Type: application/json');
         
         // Initialize logged in user for the AJAX request
-        $rest_response = CallAPI("GET", "http://rest/users/".$_SESSION['user']);
+        $rest_response = CallAPI("GET", "/users/".$_SESSION['user']);
         $loged_in_user = json_decode($rest_response);
         
         $url_params = [
@@ -63,7 +63,7 @@
             "orientation" => isset($_POST['order']) ? $_POST['order'] : 'ASC'
         ];
 
-        $rest_response = CallAPI("GET", "http://rest/users", $url_params);
+        $rest_response = CallAPI("GET", "/users", $url_params);
         $users = json_decode($rest_response);
         
         $html = '';
@@ -86,8 +86,7 @@
     }
 
     // select logged in users detail
-
-    $rest_response = CallAPI("GET","http://rest/users/".$_SESSION['user']);
+    $rest_response = CallAPI("GET", "/users/".$_SESSION['user']);
     $loged_in_user = json_decode($rest_response);
     // Table sorting mechanism
 

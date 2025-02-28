@@ -1,7 +1,25 @@
 <?php
 
+function getApiBaseUrl() {
+    // Check if running locally
+    $hostname = gethostname();
+    if (strpos($hostname, 'DESKTOP') !== false 
+    || strpos($hostname, 'localhost') !== false
+    || strpos($hostname, '127.0.0.1') !== false) {
+        return 'http://localhost:5000';
+    }
+    // In Azure or other environments, use the service name
+    return 'http://rest:5000';
+}
+
 function CallAPI($method, $url, $data = false)
 {
+    // If the URL doesn't start with http, assume it's a relative path
+    if (strpos($url, 'http') !== 0) {
+        $url = getApiBaseUrl() . $url;
+        error_log("API Call URL: " . $url);
+    }
+    
     $curl = curl_init();
     $is_json_payload = false;
 

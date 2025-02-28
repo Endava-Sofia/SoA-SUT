@@ -9,7 +9,7 @@ if (!isset($_SESSION['user'])) {
 }
 // select logged in users detail
 
-$rest_response = CallAPI("GET","http://rest/users/".$_SESSION['user']);
+$rest_response = CallAPI("GET", "/users/".$_SESSION['user']);
 $loged_in_user = json_decode($rest_response);
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     ];
 
     $json_payload =  json_encode($payload);
-    $api_result = CallAPI("POST", "http://rest/search/users", $json_payload);
+    $api_result = CallAPI("POST", "/search/users", $json_payload);
     $search_result = json_decode($api_result);
 }
 

@@ -21,7 +21,7 @@ if (isset($_POST['btn-login'])) {
     ];
 
     $json_payload = json_encode($payload);
-    $api_result = CallAPI("POST", "http://rest/login", $json_payload);
+    $api_result = CallAPI("POST", "/login", $json_payload);
     $response = json_decode($api_result);
 
     if ($response === null) {

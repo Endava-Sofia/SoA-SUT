@@ -2,7 +2,7 @@
 require_once 'api_client.php';
 
 function getCitiesByCountry($country) {
-    $url = 'http://rest/cities/'.$country;
+    $url = '/cities/'.$country;
     $rest_response = CallAPI("GET", $url);
     return $rest_response;
 }

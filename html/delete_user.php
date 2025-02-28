@@ -9,7 +9,7 @@ if (!isset($_SESSION['user'])) {
 }
 
 // select logged in users detail
-$rest_response = CallAPI("GET","http://rest/users/".$_SESSION['user']);
+$rest_response = CallAPI("GET", "/users/".$_SESSION['user']);
 $loged_in_user = json_decode($rest_response);
 
 
@@ -19,7 +19,7 @@ if (!$loged_in_user->is_admin) {
     exit;
 } else{
     $id=$_GET['id'];
-    $rest_response = CallAPI("DELETE","http://rest/users/".$id);
+    $rest_response = CallAPI("DELETE", "/users/".$id);
     header("Location: users.php"); 
 }
 
