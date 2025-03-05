@@ -52,7 +52,7 @@ Content-Type: application/json
     "country": "string",
     "city": "string",
     "email": "string",
-    "password": "string",
+    "password": "<hashed_password>", //password hashing using SHA256
     "is_admin": boolean
 }
 ```
@@ -89,7 +89,7 @@ Content-Type: application/json
 
 {
     "email": "string",
-    "password": "string"
+    "password": "<hashed_password>", //password hashing using SHA256
 }
 ```
 
