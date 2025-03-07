@@ -105,7 +105,7 @@
         "orientation" => $sort_order
     ];
 
-    if  ($rest_response = CallAPI("GET","http://rest/users", $url_params)) {
+    if  ($rest_response = CallAPI("GET","/users", $url_params)) {
         // Some variables we need for the table.
         $available_users = json_decode($rest_response);
         $up_or_down = str_replace(array('ASC','DESC'), array('by-attributes','by-attributes-alt'), $sort_order); 
