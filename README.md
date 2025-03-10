@@ -12,7 +12,7 @@ The application consists of three main components running in Docker containers:
 
 ## Installation Requirements
 
-- Docker Desktop / Rancher Desktop (*use moby Container Engine)
+- Docker Desktop / Rancher Desktop (*use moby Container Engine, https://docs.rancherdesktop.io/getting-started/installation/)
 - Git
 
 ## Quick Start
