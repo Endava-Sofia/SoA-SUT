@@ -64,7 +64,7 @@ Along with your PR, include a single Markdown text file (e.g. SOLUTION.md) conta
 
 ## Support and Issues
 If you have any questions or need further details, feel free to reach out:
-*yakim.rachev@endava.com* | *georgi.kokonov@endava.com* | *some random collegue*
+*yakim.rachev@endava.com* | *georgi.kokonov@endava.com* | *some random collegue*.
 
 ---
 
