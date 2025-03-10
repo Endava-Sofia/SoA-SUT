@@ -62,6 +62,11 @@ Along with your PR, include a single Markdown text file (e.g. SOLUTION.md) conta
 - **Challenges encountered**
 - **How you overcame limitations** of the AI tool(s)
 
+## Support and Issues
+If you have any questions or need further details, feel free to reach out:
+*yakim.rachev@endava.com* | *georgi.kokonov@endava.com*
+*some random collegue*
+
 ---
 
 **Good luck, and have fun experimenting!**
