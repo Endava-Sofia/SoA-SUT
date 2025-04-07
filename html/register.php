@@ -1,56 +1,75 @@
 <?php
 ob_start();
 session_start();
+require_once 'api_client.php';
+require_once 'security.php';
 
-if (isset($_SESSION['user']) != "") {
+if (isset($_SESSION['user'])) {
     header("Location: index.php");
+    exit();
 }
 
-require_once 'api_client.php';
-
 if (isset($_POST['signup'])) {
+    // Sanitize and validate input
+    $title = sanitize_input($_POST['title']);
+    $first_name = sanitize_input($_POST['first_name']);
+    $sir_name = sanitize_input($_POST['sir_name']);
+    $email = sanitize_input($_POST['email']);
+    $country = sanitize_input($_POST['country']);
+    $city = sanitize_input($_POST['city']);
+    $upass = $_POST['pass']; // Don't sanitize password
 
-    $title = trim($_POST['title']);
-    $first_name = trim($_POST['first_name']); // get posted data and remove whitespace
-    $sir_name = trim($_POST['sir_name']);
-    $email = trim($_POST['email']);
-    $country = trim($_POST['country']);
-    $city = trim($_POST['city']);
-    $upass = trim($_POST['pass']);
-
-    // hash password with SHA256;
-    $password = hash('sha256', $upass);
-
-    $payload = [
-        "title" => $title,
-        "first_name" => $first_name,
-        "sir_name" => $sir_name,
-        "email" => $email,
-        "password" => $password,
-        "country" => $country,
-        "city" => $city,
-        "is_admin" => false
-    ];
-
-    $json_payload =  json_encode($payload);
-    $api_result = CallAPI("POST", "/users", $json_payload);
-    $response = json_decode($api_result);
-
-    if (is_null($response)) {
-        $errTyp = "danger";
-        $errMSG = "Someting really bad has happened";
-    } if (property_exists( $response, "message" )) {
-        $errTyp = "warning";
-        $errMSG = $response->message;
-    } elseif (property_exists( $response, "id" )) {
-        $_SESSION['user'] = $response->id;
-        header("Location: index.php");
-        exit;
-    } else {
-        $errTyp = "danger";
-        $errMSG = "Unexpected responce";
+    // Validate input
+    $errors = [];
+    if (!validate_name($first_name)) {
+        $errors[] = "First name must contain only letters and be 2-15 characters long";
+    }
+    if (!validate_name($sir_name)) {
+        $errors[] = "Surname must contain only letters and be 2-15 characters long";
+    }
+    if (!validate_email($email)) {
+        $errors[] = "Invalid email format";
+    }
+    if (!validate_password($upass)) {
+        $errors[] = "Password must be at least 6 characters long";
     }
 
+    if (empty($errors)) {
+        $password = hash('sha256', $upass);
+        $payload = [
+            "title" => $title,
+            "first_name" => $first_name,
+            "sir_name" => $sir_name,
+            "email" => $email,
+            "password" => $password,
+            "country" => $country,
+            "city" => $city,
+            "is_admin" => false
+        ];
+
+        $json_payload = json_encode($payload);
+        $api_result = CallAPI("POST", "/users", $json_payload);
+        $response = json_decode($api_result);
+
+        if (is_null($response)) {
+            $errTyp = "danger";
+            $errMSG = "Something went wrong. Please try again later.";
+        } elseif (property_exists($response, "message")) {
+            $errTyp = "warning";
+            $errMSG = $response->message;
+        } elseif (property_exists($response, "id")) {
+            $_SESSION['user'] = $response->id;
+            $_SESSION['is_admin'] = $response->is_admin;
+            header("Location: index.php");
+            exit();
+        } else {
+            $errTyp = "danger";
+            $errMSG = "Unexpected response";
+        }
+    } else {
+        $errTyp = "danger";
+        $errMSG = implode("<br>", $errors);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -97,7 +116,7 @@ if (isset($_POST['signup'])) {
                     <h3 class="mb-0">Register</h3>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" autocomplete="off" class="needs-validation" novalidate>
+                    <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>" autocomplete="off" class="needs-validation" novalidate>
                         <?php if (isset($errMSG)) { ?>
                             <div class="alert alert-<?php echo $errTyp; ?>">
                                 <?php echo $errMSG; ?>
@@ -116,43 +135,44 @@ if (isset($_POST['signup'])) {
                         <div class="mb-3">
                             <label for="first_name" class="form-label">First Name</label>
                             <input type="text" name="first_name" class="form-control" id="first_name" 
-                                   value="<?php echo isset($first_name) ? htmlspecialchars($first_name) : ''; ?>"
-                                   pattern="[a-zA-Z]{1,15}" required>
-                            <div class="invalid-feedback">Please enter a valid first name (letters only, 1-15 characters).</div>
+                                   value="<?php echo isset($first_name) ? $first_name : ''; ?>"
+                                   pattern="[a-zA-Z\s]{2,15}" required>
+                            <div class="invalid-feedback">Please enter a valid first name (letters only, 2-15 characters).</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="sir_name" class="form-label">Surname</label>
                             <input type="text" name="sir_name" class="form-control" id="sir_name" 
-                                   value="<?php echo isset($sir_name) ? htmlspecialchars($sir_name) : ''; ?>"
-                                   pattern="[^0-9]{2,15}" required>
-                            <div class="invalid-feedback">Please enter a valid surname (no numbers, 2-15 characters).</div>
+                                   value="<?php echo isset($sir_name) ? $sir_name : ''; ?>"
+                                   pattern="[a-zA-Z\s]{2,15}" required>
+                            <div class="invalid-feedback">Please enter a valid surname (letters only, 2-15 characters).</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" name="email" class="form-control" id="email" 
-                                   value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" required>
+                                   value="<?php echo isset($email) ? $email : ''; ?>" required>
                             <div class="invalid-feedback">Please enter a valid email address.</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="pass" class="form-label">Password</label>
-                            <input type="password" name="pass" class="form-control" id="pass" required>
-                            <div class="invalid-feedback">Please enter a password.</div>
+                            <input type="password" name="pass" class="form-control" id="pass" 
+                                   minlength="6" required>
+                            <div class="invalid-feedback">Password must be at least 6 characters long.</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="country" class="form-label">Country</label>
                             <input type="text" name="country" class="form-control" id="country" 
-                                   value="<?php echo isset($country) ? htmlspecialchars($country) : ''; ?>" required>
+                                   value="<?php echo isset($country) ? $country : ''; ?>" required>
                             <div class="invalid-feedback">Please enter your country.</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="city" class="form-label">City</label>
                             <input type="text" name="city" class="form-control" id="city" 
-                                   value="<?php echo isset($city) ? htmlspecialchars($city) : ''; ?>" required>
+                                   value="<?php echo isset($city) ? $city : ''; ?>" required>
                             <div class="invalid-feedback">Please enter your city.</div>
                         </div>
 

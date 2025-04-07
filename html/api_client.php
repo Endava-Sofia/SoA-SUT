@@ -39,6 +39,12 @@ function CallAPI($method, $url, $data = false)
                 $url = sprintf("%s?%s", $url, http_build_query($data));
     }
 
+    // Log the request details
+    error_log("API Request - Method: $method, URL: $url");
+    if ($data) {
+        error_log("API Request Data: " . print_r($data, true));
+    }
+
     if ($data && $is_json_payload) {
         curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
         curl_setopt($curl, CURLOPT_HTTPHEADER, array(
@@ -51,15 +57,41 @@ function CallAPI($method, $url, $data = false)
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 
+    // Add timeout to prevent hanging
+    curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+    curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
+
     $result = curl_exec($curl);
+    $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    
+    // Log the response
+    error_log("API Response Code: " . $http_code);
+    error_log("API Raw Response: " . $result);
     
     if (curl_errno($curl)) {
         $error = curl_error($curl);
+        error_log("API Error: " . $error);
         curl_close($curl);
         return json_encode(array("error" => $error));
     }
+
+    // Check for non-200 response codes
+    if ($http_code !== 200) {
+        error_log("API Non-200 Response: Code $http_code, Response: $result");
+        return json_encode(array("error" => "API returned status code: " . $http_code));
+    }
     
     curl_close($curl);
+    
+    // Validate JSON response
+    if (!empty($result)) {
+        $json_valid = json_decode($result);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("API Invalid JSON Response: " . json_last_error_msg());
+            return json_encode(array("error" => "Invalid JSON response from API"));
+        }
+    }
+    
     return $result;
 }
 

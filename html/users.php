@@ -59,8 +59,8 @@
         $loged_in_user = json_decode($rest_response);
         
         $url_params = [
-            "order_by" => isset($_POST['column']) ? $_POST['column'] : 'title',
-            "orientation" => isset($_POST['order']) ? $_POST['order'] : 'ASC'
+            "orderBy" => isset($_POST['column']) ? $_POST['column'] : 'title',
+            "sort" => isset($_POST['order']) ? strtolower($_POST['order']) : 'asc'
         ];
 
         $rest_response = CallAPI("GET", "/users", $url_params);
@@ -101,17 +101,43 @@
 
     // Get the result...
     $url_params = [
-        "order_by" => $column,
-        "orientation" => $sort_order
+        "orderBy" => $column,
+        "sort" => strtolower($sort_order)
     ];
 
-    if  ($rest_response = CallAPI("GET","/users", $url_params)) {
-        // Some variables we need for the table.
-        $available_users = json_decode($rest_response);
-        $up_or_down = str_replace(array('ASC','DESC'), array('by-attributes','by-attributes-alt'), $sort_order); 
-        $asc_or_desc = $sort_order == 'ASC' ? 'desc' : 'asc';
-        $add_class = ' class="highlight"';
-    
+    $available_users = [];
+    $error_message = '';
+
+    if ($rest_response = CallAPI("GET","/users", $url_params)) {
+        // Check if response is an error message from the API client
+        $error_check = json_decode($rest_response);
+        if (isset($error_check->error)) {
+            $error_message = "API Error: " . htmlspecialchars($error_check->error);
+        } else {
+            $decoded_response = json_decode($rest_response);
+            
+            // Debug information
+            error_log("API Response: " . print_r($rest_response, true));
+            error_log("Decoded Response Type: " . gettype($decoded_response));
+            error_log("Decoded Response: " . print_r($decoded_response, true));
+            
+            // Check if decode was successful
+            if ($decoded_response === null) {
+                $error_message = "Error: JSON decode failed - " . json_last_error_msg();
+            }
+            // Check if response is array or object
+            else if (is_object($decoded_response) || is_array($decoded_response)) {
+                // Convert object to array if needed
+                $available_users = is_object($decoded_response) ? [$decoded_response] : $decoded_response;
+                $up_or_down = str_replace(array('ASC','DESC'), array('by-attributes','by-attributes-alt'), $sort_order); 
+                $asc_or_desc = $sort_order == 'ASC' ? 'desc' : 'asc';
+                $add_class = ' class="highlight"';
+            } else {
+                $error_message = "Error: Unexpected response format - " . gettype($decoded_response);
+            }
+        }
+    } else {
+        $error_message = "Error: Unable to connect to the user service.";
     }
 ?>
 
@@ -175,6 +201,13 @@
                 </div>
 
                 <div class="table-responsive">
+                    <?php if (!empty($error_message)): ?>
+                        <div class="alert alert-danger" role="alert">
+                            <?php echo htmlspecialchars($error_message); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (empty($error_message)): ?>
                     <table id="users_list" class="table table-striped table-hover">
                         <thead>
                             <tr>
@@ -220,27 +253,36 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($available_users as &$user): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($user->title); ?></td>
-                                    <td><?php echo htmlspecialchars($user->first_name); ?></td>
-                                    <td><?php echo htmlspecialchars($user->sir_name); ?></td>
-                                    <td><?php echo htmlspecialchars($user->country); ?></td>
-                                    <td><?php echo htmlspecialchars($user->city); ?></td>
-                                    <td><?php echo htmlspecialchars($user->email); ?></td>
-                                    <?php if ($loged_in_user->is_admin): ?>
-                                        <td>
-                                            <a href="delete_user.php?id=<?php echo $user->id; ?>" 
-                                               class="text-danger"
-                                               onclick="return confirm('Are you SURE you want to delete <?php echo htmlspecialchars($user->first_name . ' ' . $user->sir_name); ?>?')">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </a>
-                                        </td>
+                            <?php if (!empty($available_users)): ?>
+                                <?php foreach ($available_users as $user): ?>
+                                    <?php if (is_object($user)): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($user->title ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->first_name ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->sir_name ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->country ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->city ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->email ?? ''); ?></td>
+                                        <?php if ($loged_in_user->is_admin): ?>
+                                            <td>
+                                                <a href="delete_user.php?id=<?php echo htmlspecialchars($user->id ?? ''); ?>" 
+                                                   class="text-danger"
+                                                   onclick="return confirm('Are you SURE you want to delete <?php echo htmlspecialchars(($user->first_name ?? '') . ' ' . ($user->sir_name ?? '')); ?>?')">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </a>
+                                            </td>
+                                        <?php endif; ?>
+                                    </tr>
                                     <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="<?php echo $loged_in_user->is_admin ? '7' : '6'; ?>" class="text-center">No users found</td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
