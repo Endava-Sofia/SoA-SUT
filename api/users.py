@@ -1,202 +1,194 @@
 import MySQLdb
+import re
 from flask import Blueprint, jsonify, request, current_app
 
 users_bp = Blueprint('users', __name__)
 
+def validate_input(data):
+    """Validate user input according to requirements"""
+    errors = []
+    
+    # Check required fields
+    required_fields = ['first_name', 'sir_name', 'title', 'country', 'email', 'password']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            errors.append(f"{field.replace('_', ' ').title()} is required")
+    
+    # Validate field lengths (2-15 characters)
+    for field in ['first_name', 'sir_name', 'title', 'country', 'city']:
+        if field in data and data[field]:
+            if not 2 <= len(data[field]) <= 15:
+                errors.append(f"{field.replace('_', ' ').title()} must be between 2 and 15 characters")
+    
+    # Validate name fields (no special characters)
+    if 'first_name' in data and not re.match(r'^[a-zA-Z\s]+$', data['first_name']):
+        errors.append("First name cannot contain special characters")
+    if 'sir_name' in data and not re.match(r'^[a-zA-Z\s]+$', data['sir_name']):
+        errors.append("Sir name cannot contain special characters")
+    
+    # Validate email format
+    if 'email' in data and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', data['email']):
+        errors.append("Invalid email format")
+    
+    return errors
+
 def get_user_by_email(_email):
-    sqlQuery = f"SELECT * FROM users WHERE email = '{_email}'"
     try:
-        print(f"quering for {sqlQuery}")
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute(sqlQuery)
-        res = cursor.fetchone()
-        print(f"Got result from SQL {sqlQuery} = {res}")
-        return res
+        cursor.execute("SELECT * FROM users WHERE email = %s", [_email])
+        return cursor.fetchone()
     except Exception as e:
-        print(e)
+        print(f"Error getting user by email: {str(e)}")
+        return None
 
 def get_user_by_id(_id):
-    sqlQuery = f"SELECT * FROM users WHERE id = {_id}"
     try:
-        print(f"quering for {sqlQuery}")
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute(sqlQuery)
-        res = cursor.fetchone()
-        print(f"Got result from SQL {sqlQuery} = {res}")
-        return res
+        cursor.execute("SELECT * FROM users WHERE id = %s", [_id])
+        return cursor.fetchone()
     except Exception as e:
-        print(e)
+        print(f"Error getting user by id: {str(e)}")
         return None
 
 @users_bp.route('/users', methods=['POST'])
 def add_user():
-    has_oppend_con = False
     try:
         _json = request.json
-        _firstName = _json['first_name']
-        _surName = _json['sir_name']
-        _title = _json['title']
-        _country = _json['country']
-        _city = _json['city']
-        _email = _json['email']
-        _password = _json['password']
-        _isAdmin = _json.get('is_admin', False)
+        errors = validate_input(_json)
+        if errors:
+            return jsonify({"errors": errors}), 400
 
-        if get_user_by_email(_email) is not None :
-            print("User does exist")
-            response = jsonify({"message" : "User with such email already exists"})
-            response.status_code = 418
-            print("returning error")
-            return response
-        else:
-            pass
-            print("User does NOT exist")
+        if get_user_by_email(_json['email']):
+            return jsonify({"message": "User with such email already exists"}), 409
 
-            _city = _city if _city else ""  #allow the bug from UI to process
-        if _firstName and _surName and _title and _country and _email and _password and request.method == 'POST':
-            print("Saving user")
-            sqlQuery = "INSERT INTO users(is_admin, first_name, sir_name, title, country, city, email, password) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
-            bindData = (_isAdmin, _firstName, _surName, _title, _country, _city, _email, _password)
-            conn = current_app.mysql.connection
-            cursor = conn.cursor()
-            cursor.execute(sqlQuery, bindData)
-            conn.commit()
-            created_user = jsonify(get_user_by_email(_email))
-            response = created_user
-            response.status_code = 200
-            return response
-        else:
-            return not_found()
+        sqlQuery = """INSERT INTO users(is_admin, first_name, sir_name, title, country, 
+                   city, email, password) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"""
+        bindData = (_json.get('is_admin', False), _json['first_name'], _json['sir_name'],
+                   _json['title'], _json['country'], _json.get('city', ''),
+                   _json['email'], _json['password'])
+        
+        conn = current_app.mysql.connection
+        cursor = conn.cursor()
+        cursor.execute(sqlQuery, bindData)
+        conn.commit()
+        
+        return jsonify(get_user_by_email(_json['email'])), 200
+    except KeyError as e:
+        return jsonify({"message": f"Missing required field: {str(e)}"}), 400
     except Exception as e:
-        print(e)
+        print(f"Error adding user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
+
+@users_bp.route('/login', methods=['POST'])
+def login():
+    try:
+        _json = request.json
+        if not _json.get('email') or not _json.get('password'):
+            return jsonify({"message": "Email and password are required"}), 400
+
+        conn = current_app.mysql.connection
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT * FROM users WHERE email = %s AND password = %s", 
+                      [_json['email'], _json['password']])
+        
+        user = cursor.fetchone()
+        if not user:
+            return jsonify({"message": "Invalid email or password"}), 401
+        
+        return jsonify(user), 200
+    except Exception as e:
+        print(f"Error during login: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.route('/users/<int:id>', methods=['PUT'])
 def update_user(id):
     try:
         _json = request.json
-        _firstName = _json['first_name']
-        _surName = _json['sir_name']
-        _title = _json['title']
-        _email = _json['email']
-        _country = _json['country']
-        _city = _json['city']
+        errors = validate_input(_json)
+        if errors:
+            return jsonify({"errors": errors}), 400
 
-        esixting_user = get_user_by_email(_email)
-        if esixting_user is not None and esixting_user['id'] != id :
-            print("User does exist")
-            response = jsonify({"message" : "User with such email already exists"})
-            response.status_code = 418
-            print("returning error")
-            return response
-        else:
-            pass
-            print("User does NOT exist")
+        existing_user = get_user_by_email(_json['email'])
+        if existing_user and existing_user['id'] != id:
+            return jsonify({"message": "Email already in use"}), 409
 
-        # validate the received values
-        if _firstName and _surName and _title and _country and _email and _city and request.method == 'PUT':
-            sqlQuery = "UPDATE users SET first_name=%s, sir_name=%s, title=%s, email=%s, country=%s, city=%s WHERE id=%s"
-            bindData = (_firstName, _surName, _title, _email, _country, _city, id)
-            conn = current_app.mysql.connection
-            cursor = conn.cursor()
-            cursor.execute(sqlQuery, bindData)
-            conn.commit()
-            response = jsonify(get_user_by_id(id))
-            response.status_code = 200
-            return response
-        else:
-            return not_found()
+        sqlQuery = """UPDATE users SET first_name=%s, sir_name=%s, title=%s, 
+                     email=%s, country=%s, city=%s WHERE id=%s"""
+        bindData = (_json['first_name'], _json['sir_name'], _json['title'],
+                   _json['email'], _json['country'], _json.get('city', ''), id)
+        
+        conn = current_app.mysql.connection
+        cursor = conn.cursor()
+        cursor.execute(sqlQuery, bindData)
+        conn.commit()
+        
+        return jsonify(get_user_by_id(id)), 200
     except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error updating user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.route('/users', methods=['GET'])
 def list_users():
     try:
         order_by = request.args.get('order_by')
-        orientation = request.args.get('orientation')
+        orientation = request.args.get('orientation', 'ASC')
+        
+        # Validate order_by parameter to prevent SQL injection
+        valid_columns = ['first_name', 'sir_name', 'email', 'country', 'city']
+        if order_by and order_by not in valid_columns:
+            return jsonify({"message": "Invalid sort column"}), 400
+        
+        # Validate orientation parameter
+        if orientation.upper() not in ['ASC', 'DESC']:
+            return jsonify({"message": "Invalid sort direction"}), 400
         
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        sqlQuery = ""
-        if order_by is None:
-            print ("retrieving not ordered users")
-            sqlQuery = "SELECT * FROM users"
-        else:
-            orientation = "ASC" if orientation is None else orientation
-            sqlQuery = "SELECT * FROM users WHERE is_admin = false ORDER BY %s %s" % (order_by, orientation)
-            print ("retrieving users ordered by " + order_by + " and orientation " + orientation)
         
-        print("Running SQL " + sqlQuery)   
-        cursor.execute(sqlQuery)
-
-        usersRows = cursor.fetchall()
-        respone = jsonify(usersRows)
-        respone.status_code = 200
-        return respone
+        if order_by:
+            sqlQuery = "SELECT * FROM users WHERE is_admin = false ORDER BY %s %s"
+            cursor.execute(sqlQuery, (order_by, orientation))
+        else:
+            cursor.execute("SELECT * FROM users WHERE is_admin = false")
+        
+        users = cursor.fetchall()
+        return jsonify(users), 200
     except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error listing users: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.route('/users/<int:id>', methods=['GET'])
 def get_user(id):
     try:
-        conn = current_app.mysql.connection
-        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute(f"SELECT * FROM users WHERE id = {id} limit 1")
-        empRow = cursor.fetchone()
-        response = jsonify(empRow)
-        response.status_code = 200
-        return response
+        user = get_user_by_id(id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        return jsonify(user), 200
     except Exception as e:
-        print(e)
-
-@users_bp.route('/login', methods=['POST'])
-def login():
-    try:
-        print("Enter login method")
-        _json = request.json
-        
-        _email = _json['email']
-        _password = _json['password']
-        conn = current_app.mysql.connection
-        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT * FROM users WHERE email = %s AND password = %s limit 1", [_email, _password])
-        print("My SQL queried with " + _email + " and " + _password)
-        
-        if cursor.rowcount < 1 :
-            response = jsonify({"message" : "Invalid user or email"})
-            response.status_code = 401
-            return response
-       
-        empRow = cursor.fetchone()
-        response = jsonify(empRow)
-        response.status_code = 200
-        return response
-    except Exception as e:
-        print(e)
+        print(f"Error getting user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.route('/users/<int:id>', methods=['DELETE'])
 def delete_user(id):
     try:
+        user = get_user_by_id(id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+            
         conn = current_app.mysql.connection
         cursor = conn.cursor()
-        cursor.execute(f"DELETE FROM users WHERE id ={id}")
+        cursor.execute("DELETE FROM users WHERE id = %s", [id])
         conn.commit()
-        response = jsonify('User deleted successfully!')
-        response.status_code = 200
-        return response
+        return jsonify({"message": "User deleted successfully"}), 200
     except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-        
+        print(f"Error deleting user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
+
 @users_bp.errorhandler(404)
 def not_found(error=None):
-    message = {
+    return jsonify({
         'status': 404,
-        'message': 'Record not found: ' + request.url,
-    }
-    response = jsonify(message)
-    response.status_code = 404
-    return response
+        'message': 'Resource not found: ' + request.url
+    }), 404
