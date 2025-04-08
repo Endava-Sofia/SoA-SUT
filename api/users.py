@@ -1,8 +1,30 @@
 import MySQLdb
 import re
-from flask import Blueprint, jsonify, request, current_app
+import os
+from flask import Blueprint, jsonify, request, current_app, send_from_directory, url_for
+from werkzeug.utils import secure_filename
 
 users_bp = Blueprint('users', __name__)
+
+# Configure upload folder
+UPLOAD_FOLDER = '/app/uploads/profile_pictures'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def validate_image(file):
+    """Validate uploaded image file"""
+    if not file:
+        return "No file provided"
+    if not allowed_file(file.filename):
+        return "Invalid file type. Allowed types: png, jpg, jpeg"
+    if len(file.read()) > MAX_FILE_SIZE:
+        file.seek(0)  # Reset file pointer after reading
+        return "File size exceeds 5MB limit"
+    file.seek(0)  # Reset file pointer after reading
+    return None
 
 def validate_input(data):
     """Validate user input according to requirements"""
@@ -32,12 +54,21 @@ def validate_input(data):
     
     return errors
 
+def get_profile_picture_url(filename):
+    """Convert filename to full URL path"""
+    if not filename:
+        return None
+    return f'uploads/profile_pictures/{filename}'
+
 def get_user_by_email(_email):
     try:
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("SELECT * FROM users WHERE email = %s", [_email])
-        return cursor.fetchone()
+        user = cursor.fetchone()
+        if user and user['profile_picture']:
+            user['profile_picture'] = get_profile_picture_url(user['profile_picture'])
+        return user
     except Exception as e:
         print(f"Error getting user by email: {str(e)}")
         return None
@@ -47,7 +78,10 @@ def get_user_by_id(_id):
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("SELECT * FROM users WHERE id = %s", [_id])
-        return cursor.fetchone()
+        user = cursor.fetchone()
+        if user and user['profile_picture']:
+            user['profile_picture'] = get_profile_picture_url(user['profile_picture'])
+        return user
     except Exception as e:
         print(f"Error getting user by id: {str(e)}")
         return None
@@ -102,6 +136,51 @@ def login():
         print(f"Error during login: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
 
+@users_bp.route('/users/<int:id>/profile-picture', methods=['POST'])
+def upload_profile_picture(id):
+    try:
+        # Check if user exists
+        user = get_user_by_id(id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+
+        if 'file' not in request.files:
+            return jsonify({"message": "No file part"}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"message": "No selected file"}), 400
+
+        # Validate image
+        error = validate_image(file)
+        if error:
+            return jsonify({"message": error}), 400
+
+        # Create secure filename with user ID
+        filename = f"{id}_{secure_filename(file.filename)}"
+        
+        # Ensure upload directory exists
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        
+        # Save file
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+        
+        # Update user's profile picture in database
+        conn = current_app.mysql.connection
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET profile_picture = %s WHERE id = %s", (filename, id))
+        conn.commit()
+        
+        return jsonify({
+            "message": "Profile picture uploaded successfully",
+            "profile_picture": get_profile_picture_url(filename)
+        }), 200
+
+    except Exception as e:
+        print(f"Error uploading profile picture: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
+
 @users_bp.route('/users/<int:id>', methods=['PUT'])
 def update_user(id):
     try:
@@ -115,9 +194,10 @@ def update_user(id):
             return jsonify({"message": "Email already in use"}), 409
 
         sqlQuery = """UPDATE users SET first_name=%s, sir_name=%s, title=%s, 
-                     email=%s, country=%s, city=%s WHERE id=%s"""
+                     email=%s, country=%s, city=%s, profile_picture=%s WHERE id=%s"""
         bindData = (_json['first_name'], _json['sir_name'], _json['title'],
-                   _json['email'], _json['country'], _json.get('city', ''), id)
+                   _json['email'], _json['country'], _json.get('city', ''),
+                   _json.get('profile_picture'), id)
         
         conn = current_app.mysql.connection
         cursor = conn.cursor()
@@ -132,28 +212,32 @@ def update_user(id):
 @users_bp.route('/users', methods=['GET'])
 def list_users():
     try:
-        order_by = request.args.get('order_by')
-        orientation = request.args.get('orientation', 'ASC')
+        order_by = request.args.get('orderBy')
+        sort = request.args.get('sort', 'asc')
         
         # Validate order_by parameter to prevent SQL injection
-        valid_columns = ['first_name', 'sir_name', 'email', 'country', 'city']
+        valid_columns = ['first_name', 'sir_name', 'email', 'country', 'city', 'title']
         if order_by and order_by not in valid_columns:
             return jsonify({"message": "Invalid sort column"}), 400
         
-        # Validate orientation parameter
-        if orientation.upper() not in ['ASC', 'DESC']:
+        # Validate sort parameter
+        if sort.lower() not in ['asc', 'desc']:
             return jsonify({"message": "Invalid sort direction"}), 400
         
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
         
         if order_by:
-            sqlQuery = "SELECT * FROM users WHERE is_admin = false ORDER BY %s %s"
-            cursor.execute(sqlQuery, (order_by, orientation))
+            sqlQuery = f"SELECT * FROM users ORDER BY {order_by} {sort}"
+            cursor.execute(sqlQuery)
         else:
-            cursor.execute("SELECT * FROM users WHERE is_admin = false")
+            cursor.execute("SELECT * FROM users")
         
         users = cursor.fetchall()
+        # Convert profile picture filenames to full URLs
+        for user in users:
+            if user['profile_picture']:
+                user['profile_picture'] = get_profile_picture_url(user['profile_picture'])
         return jsonify(users), 200
     except Exception as e:
         print(f"Error listing users: {str(e)}")

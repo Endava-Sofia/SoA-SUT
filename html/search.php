@@ -37,6 +37,16 @@ if  ($rest_response = CallAPI("GET", "/skills")) {
         table#availableSkills tbody tr:nth-child(n+11) {
             display: none;
         }
+        
+        .navbar-profile-picture {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 8px;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -63,7 +73,14 @@ if  ($rest_response = CallAPI("GET", "/skills")) {
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person"></i> Logged in: <?php echo $loged_in_user->email; ?>
+                        <?php if (isset($loged_in_user->profile_picture) && $loged_in_user->profile_picture): ?>
+                            <img src="<?php echo htmlspecialchars($loged_in_user->profile_picture); ?>" 
+                                 class="navbar-profile-picture" alt="Profile Picture">
+                        <?php else: ?>
+                            <img src="uploads/profile_pictures/default_profile.png" 
+                                 class="navbar-profile-picture" alt="Default Profile Picture">
+                        <?php endif; ?>
+                        <?php echo $loged_in_user->email; ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>

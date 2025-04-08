@@ -12,7 +12,7 @@ function getApiBaseUrl() {
     return 'http://rest';
 }
 
-function CallAPI($method, $url, $data = false)
+function CallAPI($method, $url, $data = false, $file = false)
 {
     // If the URL doesn't start with http, assume it's a relative path
     if (strpos($url, 'http') !== 0) {
@@ -22,12 +22,17 @@ function CallAPI($method, $url, $data = false)
     
     $curl = curl_init();
     $is_json_payload = false;
+    $is_file_upload = false;
 
     switch ($method)
     {
         case "POST":
             curl_setopt($curl, CURLOPT_POST, 1);
-            $is_json_payload = true;
+            if ($file) {
+                $is_file_upload = true;
+            } else {
+                $is_json_payload = true;
+            }
             break;
         case "PUT":
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -44,8 +49,34 @@ function CallAPI($method, $url, $data = false)
     if ($data) {
         error_log("API Request Data: " . print_r($data, true));
     }
+    if ($file) {
+        error_log("API Request File: " . print_r($file, true));
+    }
 
-    if ($data && $is_json_payload) {
+    if ($is_file_upload && $file) {
+        // Handle file upload
+        if (function_exists('curl_file_create')) {
+            $cfile = curl_file_create(
+                $file['tmp_name'],
+                $file['type'],
+                $file['name']
+            );
+        } else {
+            $cfile = '@' . realpath($file['tmp_name']) . 
+                    ';filename=' . $file['name'] . 
+                    ';type=' . $file['type'];
+        }
+        
+        $post_data = array('file' => $cfile);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $post_data);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+            'Content-Type: multipart/form-data'
+        ));
+        error_log("Uploading file with curl_file_create");
+    } elseif ($data && $is_json_payload) {
+        if (!is_string($data)) {
+            $data = json_encode($data);
+        }
         curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
         curl_setopt($curl, CURLOPT_HTTPHEADER, array(
             "Content-Type: application/json",
@@ -78,7 +109,7 @@ function CallAPI($method, $url, $data = false)
     // Check for non-200 response codes
     if ($http_code !== 200) {
         error_log("API Non-200 Response: Code $http_code, Response: $result");
-        return json_encode(array("error" => "API returned status code: " . $http_code));
+        return $result; // Return the actual error response from the API
     }
     
     curl_close($curl);
