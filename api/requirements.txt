@@ -1,5 +1,8 @@
-Flask
+Flask==2.0.1
+Flask-MySQLdb==0.2.0
+pytest==7.0.1
+pytest-cov==3.0.0
+Werkzeug==2.0.1
 Flask_cors
-flask-mysqldb
 PyMySQL
 mysql-connector
