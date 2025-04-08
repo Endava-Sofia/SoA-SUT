@@ -26,6 +26,20 @@ def validate_image(file):
     file.seek(0)  # Reset file pointer after reading
     return None
 
+def validate_city_country(city, country):
+    """Validate if city belongs to the specified country"""
+    try:
+        conn = current_app.mysql.connection
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT COUNT(*) as count FROM cities WHERE city_name = %s AND country_name = %s", [city, country])
+        result = cursor.fetchone()
+        count = result['count'] if result else 0
+        print(f"Validation result for {city}, {country}: count={count}")
+        return count > 0
+    except Exception as e:
+        print(f"Error validating city-country: {str(e)}")
+        return False
+
 def validate_input(data):
     """Validate user input according to requirements"""
     errors = []
@@ -51,6 +65,11 @@ def validate_input(data):
     # Validate email format
     if 'email' in data and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', data['email']):
         errors.append("Invalid email format")
+    
+    # Validate city-country combination
+    if 'city' in data and 'country' in data and data['city'] and data['country']:
+        if not validate_city_country(data['city'], data['country']):
+            errors.append("City does not belong to the specified country")
     
     return errors
 
@@ -90,9 +109,12 @@ def get_user_by_id(_id):
 def add_user():
     try:
         _json = request.json
+        if not _json:
+            return jsonify({"message": "No input data provided"}), 400
+
         errors = validate_input(_json)
         if errors:
-            return jsonify({"errors": errors}), 400
+            return jsonify({"message": errors[0] if len(errors) == 1 else errors}), 400
 
         if get_user_by_email(_json['email']):
             return jsonify({"message": "User with such email already exists"}), 409
@@ -268,6 +290,18 @@ def delete_user(id):
         return jsonify({"message": "User deleted successfully"}), 200
     except Exception as e:
         print(f"Error deleting user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
+
+@users_bp.route('/cities/<country_name>', methods=['GET'])
+def get_cities_by_country(country_name):
+    try:
+        conn = current_app.mysql.connection
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT city_name FROM cities WHERE country_name = %s", [country_name])
+        cities = cursor.fetchall()
+        return jsonify([city['city_name'] for city in cities]), 200
+    except Exception as e:
+        print(f"Error getting cities: {str(e)}")
         return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.errorhandler(404)

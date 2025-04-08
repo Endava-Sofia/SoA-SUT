@@ -14,6 +14,13 @@ def app():
     app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', 'pass')
     app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'db')
     app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+    
+    # Import and register blueprints
+    import sys
+    sys.path.append('/app')
+    from users import users_bp
+    app.register_blueprint(users_bp)
+    
     return app
 
 @pytest.fixture(scope='session')
@@ -50,12 +57,41 @@ def setup_test_db(app, test_db):
             
             cursor = conn.cursor()
             
+            # Ensure cities table exists
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cities (
+                  id int(11) NOT NULL AUTO_INCREMENT,
+                  city_name varchar(100) NOT NULL,
+                  country_name varchar(100) NOT NULL,
+                  PRIMARY KEY (id),
+                  UNIQUE KEY unique_city_country (city_name, country_name)
+                ) ENGINE=InnoDB DEFAULT CHARSET=latin1
+            """)
+            
+            # Check if cities table has data, if not add test cities
+            cursor.execute("SELECT COUNT(*) FROM cities")
+            city_count = cursor.fetchone()['COUNT(*)']
+            if city_count == 0:
+                test_cities = [
+                    ('Sofia', 'Bulgaria'),
+                    ('Sopot', 'Bulgaria'),
+                    ('Elin Pelin', 'Bulgaria'),
+                    ('London', 'UK'),
+                    ('Berlin', 'Germany'),
+                    ('New York', 'USA')
+                ]
+                cursor.executemany(
+                    "INSERT IGNORE INTO cities (city_name, country_name) VALUES (%s, %s)",
+                    test_cities
+                )
+                conn.commit()
+            
             # Check if test user exists, if not create it
             cursor.execute("SELECT id FROM users WHERE email = 'test@example.com'")
             if not cursor.fetchone():
                 cursor.execute("""
                     INSERT INTO users (id, first_name, sir_name, title, country, city, email, password)
-                    VALUES (999, 'Test', 'User', 'Mr.', 'Testland', 'Test City', 'test@example.com', 'password')
+                    VALUES (999, 'Test', 'User', 'Mr.', 'Bulgaria', 'Sofia', 'test@example.com', 'password')
                 """)
                 conn.commit()
             

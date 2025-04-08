@@ -24,5 +24,5 @@ ENV MYSQL_DB=db
 ENV PYTHONPATH=/app
 
 # Command to run tests with arguments
-ENTRYPOINT ["pytest", "tests/test_profile_picture.py"]
+ENTRYPOINT ["pytest", "tests/"]
 CMD ["-v"] 

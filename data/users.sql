@@ -143,6 +143,43 @@ VALUES
 (13, 1, 3), (16, 4, 2), (14, 8, 1), (10, 12, 4), (18, 17, 3),
 (14, 2, 3), (15, 5, 2), (13, 9, 1), (21, 13, 3), (19, 18, 5);
 
+CREATE TABLE IF NOT EXISTS cities (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  city_name varchar(100) NOT NULL,
+  country_name varchar(100) NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY unique_city_country (city_name, country_name)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- Insert cities
+INSERT IGNORE INTO cities (city_name, country_name) VALUES
+('Sofia', 'Bulgaria'),
+('Sopot', 'Bulgaria'),
+('Elin Pelin', 'Bulgaria'),
+('Pravets', 'Bulgaria'),
+('Kardjali', 'Bulgaria'),
+('Plovdiv', 'Bulgaria'),
+('Varna', 'Bulgaria'),
+('Burgas', 'Bulgaria'),
+('Pleven', 'Bulgaria'),
+('London', 'UK'),
+('Manchester', 'UK'),
+('Berlin', 'Germany'),
+('Munich', 'Germany'),
+('New York', 'USA'),
+('Los Angeles', 'USA'),
+('Paris', 'France'),
+('Rome', 'Italy'),
+('Madrid', 'Spain'),
+('Lisbon', 'Portugal'),
+('Toronto', 'Canada'),
+('Sydney', 'Australia'),
+('Tokyo', 'Japan'),
+('Rio de Janeiro', 'Brazil'),
+('Buenos Aires', 'Argentina'),
+('Moscow', 'Russia'),
+('Mumbai', 'India'),
+('Beijing', 'China');
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
