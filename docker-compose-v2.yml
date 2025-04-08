@@ -11,7 +11,8 @@ services:
         mode: ingress
     volumes:
       - ./data:/docker-entrypoint-initdb.d
-      - mysql_data:/var/lib/mysql
+      - type: tmpfs
+        target: /var/lib/mysql
     networks:
       - soa-network
     environment:
@@ -25,7 +26,8 @@ services:
       ports:
         - "8080:80"
       volumes:
-        - profile-uploads:/var/www/html/uploads/profile_pictures
+        - type: tmpfs
+          target: /var/www/html/uploads/profile_pictures
       networks:
         - soa-network
 
@@ -36,7 +38,8 @@ services:
       ports:
         - "5000:5000"
       volumes:
-        - profile-uploads:/app/uploads/profile_pictures
+        - type: tmpfs
+          target: /app/uploads/profile_pictures
       networks:
         - soa-network
 

@@ -151,5 +151,22 @@ The project uses a microservices architecture with three main services:
 - rest : Python REST API service
 - mysql : Database service
 
-All services are connected through a Docker bridge network named soa-network localy.
+All services are connected through a Docker bridge network named soa-network locally.
 And also the project can be deployed in Azure DevOps.
+
+### Data Storage Configuration
+The application uses temporary storage (tmpfs) for development to ensure a clean state:
+- MySQL data is stored in temporary memory and cleared when containers stop
+- Profile pictures and uploads are stored in temporary filesystems
+- No persistent volumes are used except for initial database schema loading
+
+To completely clean the environment:
+```bash
+# Stop and remove containers
+docker-compose -f docker-compose-v2.yml down
+
+# Remove all unused images
+docker image prune -a -f
+```
+
+This configuration ensures that each time you restart the containers, you get a fresh environment with no leftover data from previous runs.

@@ -234,39 +234,51 @@ if  ($rest_response = CallAPI("GET", "/skills")) {
         $.ajax({
             url: 'api_client.php',
             method: 'POST',
-            data: {country: selectedCountry},
+            data: { country: selectedCountry },
             success: function (response) {
                 var citiesSelect = $('#availableCities');
                 citiesSelect.empty();
-                console.log(response)
-                var data  = JSON.parse(response);
-                console.log("data - " + response)
-                $.each(data, function (index, city) {
-                    citiesSelect.append('<option class="list-group-item" value="' + city + '">' + city + '</option>');
-                });
-                citiesSelect.prop('disabled', false);
+                console.log("Cities response:", response);
+                try {
+                    var cities = JSON.parse(response);
+                    $.each(cities, function (index, city) {
+                        citiesSelect.append('<option class="list-group-item" value="' + city + '">' + city + '</option>');
+                    });
+                    citiesSelect.prop('disabled', false);
+                } catch (e) {
+                    console.error("Error parsing cities response:", e);
+                    citiesSelect.append('<option disabled>Error loading cities</option>');
+                    citiesSelect.prop('disabled', true);
+                }
             },
             error: function (xhr, status, error) {
-                console.error(error);
+                console.error("Error fetching cities:", error);
+                var citiesSelect = $('#availableCities');
+                citiesSelect.empty();
+                citiesSelect.append('<option disabled>Error loading cities</option>');
+                citiesSelect.prop('disabled', true);
             }
         });
     });
 
-        function switchPage(page) {
-            $('table#availableSkills tbody tr').hide();
-            var startIndex = (page - 1) * 10;
-            var endIndex = startIndex + 10;
-            $('table tbody tr').slice(startIndex, endIndex).show();
-        }
+    // Trigger change event on page load to load cities for the default selected country
+    $('#availableCountries').trigger('change');
 
-        $('.pagination li').click(function () {
-            $('.pagination li').removeClass('active');
-            $(this).addClass('active');
-            var page = parseInt($(this).text());
-            switchPage(page);
-        });
+    function switchPage(page) {
+        $('table#availableSkills tbody tr').hide();
+        var startIndex = (page - 1) * 10;
+        var endIndex = startIndex + 10;
+        $('table tbody tr').slice(startIndex, endIndex).show();
+    }
 
-            switchPage(1);
+    $('.pagination li').click(function () {
+        $('.pagination li').removeClass('active');
+        $(this).addClass('active');
+        var page = parseInt($(this).text());
+        switchPage(page);
+    });
+
+        switchPage(1);
 
     });
 
