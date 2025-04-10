@@ -70,11 +70,16 @@
         foreach ($users as $user) {
             $html .= "<tr>";
             $html .= "<td>";
-            if (isset($user->profile_picture) && $user->profile_picture) {
-                $html .= "<img src='" . htmlspecialchars($user->profile_picture) . "' class='user-avatar' alt='Profile Picture'>";
+            $profile_picture_path = isset($user->profile_picture) ? $user->profile_picture : 'uploads/profile_pictures/default_profile.png';
+            
+            // Use the default path if the user path is empty or explicitly the default one
+            if (empty($profile_picture_path) || $profile_picture_path === 'uploads/profile_pictures/default_profile.png') {
+                 $html .= "<img src='uploads/profile_pictures/default_profile.png' class='user-avatar' alt='Default Profile Picture'>";
             } else {
-                $html .= "<img src='uploads/profile_pictures/default_profile.png' class='user-avatar' alt='Default Profile Picture'>";
+                 // Use the user-specific picture if it exists and is not the default path
+                 $html .= "<img src='" . htmlspecialchars($profile_picture_path) . "' class='user-avatar' alt='Profile Picture'>";
             }
+            
             $html .= htmlspecialchars($user->title) . "</td>";
             $html .= "<td>" . htmlspecialchars($user->first_name) . "</td>";
             $html .= "<td>" . htmlspecialchars($user->sir_name) . "</td>";

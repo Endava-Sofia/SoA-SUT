@@ -73,20 +73,12 @@ def validate_input(data):
     
     return errors
 
-def get_profile_picture_url(filename):
-    """Convert filename to full URL path"""
-    if not filename:
-        return None
-    return f'uploads/profile_pictures/{filename}'
-
 def get_user_by_email(_email):
     try:
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("SELECT * FROM users WHERE email = %s", [_email])
         user = cursor.fetchone()
-        if user and user['profile_picture']:
-            user['profile_picture'] = get_profile_picture_url(user['profile_picture'])
         return user
     except Exception as e:
         print(f"Error getting user by email: {str(e)}")
@@ -98,8 +90,6 @@ def get_user_by_id(_id):
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("SELECT * FROM users WHERE id = %s", [_id])
         user = cursor.fetchone()
-        if user and user['profile_picture']:
-            user['profile_picture'] = get_profile_picture_url(user['profile_picture'])
         return user
     except Exception as e:
         print(f"Error getting user by id: {str(e)}")
@@ -189,14 +179,17 @@ def upload_profile_picture(id):
         file.save(file_path)
         
         # Update user's profile picture in database
+        full_path = f"uploads/profile_pictures/{filename}" # Construct the full path
         conn = current_app.mysql.connection
         cursor = conn.cursor()
-        cursor.execute("UPDATE users SET profile_picture = %s WHERE id = %s", (filename, id))
+        # Store the full path in the database
+        cursor.execute("UPDATE users SET profile_picture = %s WHERE id = %s", (full_path, id)) 
         conn.commit()
         
         return jsonify({
             "message": "Profile picture uploaded successfully",
-            "profile_picture": get_profile_picture_url(filename)
+            # Return the full path in the response
+            "profile_picture": full_path 
         }), 200
 
     except Exception as e:
@@ -256,10 +249,6 @@ def list_users():
             cursor.execute("SELECT * FROM users")
         
         users = cursor.fetchall()
-        # Convert profile picture filenames to full URLs
-        for user in users:
-            if user['profile_picture']:
-                user['profile_picture'] = get_profile_picture_url(user['profile_picture'])
         return jsonify(users), 200
     except Exception as e:
         print(f"Error listing users: {str(e)}")

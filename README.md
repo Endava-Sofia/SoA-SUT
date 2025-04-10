@@ -154,19 +154,19 @@ The project uses a microservices architecture with three main services:
 All services are connected through a Docker bridge network named soa-network locally.
 And also the project can be deployed in Azure DevOps.
 
-### Data Storage Configuration
-The application uses temporary storage (tmpfs) for development to ensure a clean state:
-- MySQL data is stored in temporary memory and cleared when containers stop
-- Profile pictures and uploads are stored in temporary filesystems
-- No persistent volumes are used except for initial database schema loading
+### Data Storage & Cleanup
 
-To completely clean the environment:
+- **Profile Pictures:** Stored in the persistent named volume `profile-uploads` (defined in `docker-compose-v2.yml`). This data persists when containers are removed.
+- **Database:** Data is stored within the `db` container and is lost when the container is removed (default test setup).
+
+**To reset the environment completely (remove containers AND the `profile-uploads` volume):**
 ```bash
-# Stop and remove containers
-docker-compose -f docker-compose-v2.yml down
+# Stop and remove containers AND the profile-uploads volume
+docker compose -f docker-compose-v2.yml down --volumes
+```
+*(Note: `docker compose down` without `--volumes` will leave the `profile-uploads` volume intact.)*
 
-# Remove all unused images
+**(Optional) To remove unused images:**
+```bash
 docker image prune -a -f
 ```
-
-This configuration ensures that each time you restart the containers, you get a fresh environment with no leftover data from previous runs.
