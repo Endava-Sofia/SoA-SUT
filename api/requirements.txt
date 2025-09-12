@@ -3,3 +3,4 @@ Flask_cors
 flask-mysqldb
 PyMySQL
 mysql-connector
+Werkzeug

@@ -12,6 +12,10 @@ COPY . /usr/src/app
 
 RUN pip install -r requirements.txt
 
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads/profile_pictures && \
+    chmod 777 /app/uploads/profile_pictures
+
 #Expose the required port
 EXPOSE 5000
 

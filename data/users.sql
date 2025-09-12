@@ -39,41 +39,42 @@ CREATE TABLE IF NOT EXISTS users (
   city varchar(100),
   email varchar(100) NOT NULL,
   password varchar(255) NOT NULL,
+  profile_picture varchar(255) DEFAULT 'uploads/profile_pictures/default_profile.png',
   PRIMARY KEY (id),
   UNIQUE (email)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
 
 
-INSERT IGNORE INTO users (id, is_admin, first_name, sir_name, email, title, country, city, password) 
+INSERT IGNORE INTO users (id, is_admin, first_name, sir_name, email, title, country, city, password, profile_picture) 
 VALUES 
-(1, true, 'Admin', 'Automation', 'admin@automation.com', 'Mr.', 'Bulgaria', 'Sofia', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c');
+(1, true, 'Admin', 'Automation', 'admin@automation.com', 'Mr.', 'Bulgaria', 'Sofia', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png');
 
-INSERT IGNORE INTO users (is_admin, first_name, sir_name, email, title, country, city, password) 
+INSERT IGNORE INTO users (is_admin, first_name, sir_name, email, title, country, city, password, profile_picture) 
 VALUES 
-(false, 'Ivan', 'Dimotrov', 'idimitrov@automation.com', 'Mr.', 'Bulgaria', 'Sofia', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Yoana', 'Ivanova', 'yivanova@automation.com', 'Mrs.', 'Bulgaria', 'Sopot', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Zdravka', 'Petrova', 'zpetrova@automation.com', 'Mrs.', 'Bulgaria', 'Elin Pelin', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Todor', 'Ivanov', 'tivanov@automation.com', 'Mr.', 'Bulgaria', 'Pravets', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Zahari', 'Avramov', 'zavramov@automation.com', 'Mr.', 'Bulgaria', 'Kardjali', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Maria', 'Georgieva', 'mgeorgieva@automation.com', 'Mrs.', 'Bulgaria', 'Plovdiv', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Stefan', 'Stoyanov', 'sstoyanov@automation.com', 'Mr.', 'Bulgaria', 'Varna', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Elena', 'Dimitrova', 'edimitrova@automation.com', 'Mrs.', 'Bulgaria', 'Burgas', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Nikolay', 'Petrov', 'npetrov@automation.com', 'Mr.', 'Bulgaria', 'Pleven', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Ivan', 'Dimotrov', 'idimitrov@automation.com', 'Mr.', 'Bulgaria', 'Sofia', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c'),
-(false, 'Petar', 'Georgiev', 'pgeorgiev@automation.com', 'Mr.', 'USA', 'New York', '1fda9b7dc74fd8e32cfdbb63bde9f29bfbfd796620d650f3d587a788c3899a4b'),
-(false, 'Maria', 'Ivanova', 'mivanova@automation.com', 'Mrs.', 'Germany', 'Berlin', 'c214b5bc5cf2e7e42f3c375eb11d484acff6aa0aae6dcb03251d3ab5de0636b8'),
-(false, 'Georgi', 'Petrov', 'gpetrov@automation.com', 'Mr.', 'France', 'Paris', '295bb16de493b0dc7a6d48d5f212f1b3d1c02d44b650ee0cf3ab74e2994f5e6e'),
-(false, 'Anna', 'Pavlova', 'apavlova@automation.com', 'Mrs.', 'Italy', 'Rome', '2c81f47b6ff7bfe9b2a803ad84e30172759b5185f28b4b02511cfcd9e2d6756b'),
-(false, 'Stefan', 'Nikolov', 'snikolov@automation.com', 'Mr.', 'Spain', 'Madrid', '760aebf1d6c6a8b8a97e80187beaee8a42e49f4f3e2c4ad6f1cdac07c20f9f5f'),
-(false, 'Elena', 'Dimitrova', 'edimitrova@automation.com', 'Mrs.', 'Portugal', 'Lisbon', 'c2e29519d85b8f2a7ad6d87a02a5c3f5f135df93d2b14e298a79161a9fb1571c'),
-(false, 'Nikola', 'Stoyanov', 'nstoyanov@automation.com', 'Mr.', 'Canada', 'Toronto', '0ac5d7723c2d3f25f42875705f2c3447c82d2920b0b6da74eb541e6da44b98e0'),
-(false, 'Kristina', 'Vasileva', 'kvasileva@automation.com', 'Mrs.', 'Australia', 'Sydney', 'c6324a4cc2316b5e7e4e68a43154f8c3d0f72e2ac2e7cde7da2fe3c26fe325cb'),
-(false, 'Martin', 'Petrov', 'mpetrov@automation.com', 'Mr.', 'Japan', 'Tokyo', '1d3bc8712b8405d0a3ffdc70d89ec3ccfcd19baf53ef2fc26f17a2b30dd216c5'),
-(false, 'Iva', 'Todorova', 'itodorova@automation.com', 'Mrs.', 'Brazil', 'Rio de Janeiro', 'b20d049f17a6ee92271d7586c97b14442242820e25dc58446e9cf6c89281c4e5'),
-(false, 'Dimitar', 'Nikolov', 'dnikolov@automation.com', 'Mr.', 'Argentina', 'Buenos Aires', 'e3d0c764f6f11c070ee13b82b32d3c8f37647e564b1485a92e5c5f352314e7cb'),
-(false, 'Tanya', 'Dimitrova', 'tdimitrova@automation.com', 'Mrs.', 'Russia', 'Moscow', 'e2b7d5a584f30dfae5730919f9b1cf41b35dfad15fd6e890c0948da0d46de14b'),
-(false, 'Vladimir', 'Georgiev', 'vgeorgiev@automation.com', 'Mr.', 'India', 'Mumbai', '37413cc9b1145451918b92d80f672f916f17d314b8a92a29e1eae9dc1503bc44'),
-(false, 'Eva', 'Pavlova', 'epavlova@automation.com', 'Mrs.', 'China', 'Beijing', '4c3f64c170c09dcfa51224d5b8ff65474e3c20d35a8e5f54399ebeaf91a49bfb');
+(false, 'Ivan', 'Dimotrov', 'idimitrov@automation.com', 'Mr.', 'Bulgaria', 'Sofia', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Yoana', 'Ivanova', 'yivanova@automation.com', 'Mrs.', 'Bulgaria', 'Sopot', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Zdravka', 'Petrova', 'zpetrova@automation.com', 'Mrs.', 'Bulgaria', 'Elin Pelin', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Todor', 'Ivanov', 'tivanov@automation.com', 'Mr.', 'Bulgaria', 'Pravets', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Zahari', 'Avramov', 'zavramov@automation.com', 'Mr.', 'Bulgaria', 'Kardjali', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Maria', 'Georgieva', 'mgeorgieva@automation.com', 'Mrs.', 'Bulgaria', 'Plovdiv', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Stefan', 'Stoyanov', 'sstoyanov@automation.com', 'Mr.', 'Bulgaria', 'Varna', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Elena', 'Dimitrova', 'edimitrova@automation.com', 'Mrs.', 'Bulgaria', 'Burgas', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Nikolay', 'Petrov', 'npetrov@automation.com', 'Mr.', 'Bulgaria', 'Pleven', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Ivan', 'Dimotrov', 'idimitrov@automation.com', 'Mr.', 'Bulgaria', 'Sofia', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Petar', 'Georgiev', 'pgeorgiev@automation.com', 'Mr.', 'USA', 'New York', '1fda9b7dc74fd8e32cfdbb63bde9f29bfbfd796620d650f3d587a788c3899a4b', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Maria', 'Ivanova', 'mivanova@automation.com', 'Mrs.', 'Germany', 'Berlin', 'c214b5bc5cf2e7e42f3c375eb11d484acff6aa0aae6dcb03251d3ab5de0636b8', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Georgi', 'Petrov', 'gpetrov@automation.com', 'Mr.', 'France', 'Paris', '295bb16de493b0dc7a6d48d5f212f1b3d1c02d44b650ee0cf3ab74e2994f5e6e', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Anna', 'Pavlova', 'apavlova@automation.com', 'Mrs.', 'Italy', 'Rome', '2c81f47b6ff7bfe9b2a803ad84e30172759b5185f28b4b02511cfcd9e2d6756b', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Stefan', 'Nikolov', 'snikolov@automation.com', 'Mr.', 'Spain', 'Madrid', '760aebf1d6c6a8b8a97e80187beaee8a42e49f4f3e2c4ad6f1cdac07c20f9f5f', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Elena', 'Dimitrova', 'edimitrova@automation.com', 'Mrs.', 'Portugal', 'Lisbon', 'c2e29519d85b8f2a7ad6d87a02a5c3f5f135df93d2b14e298a79161a9fb1571c', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Nikola', 'Stoyanov', 'nstoyanov@automation.com', 'Mr.', 'Canada', 'Toronto', '0ac5d7723c2d3f25f42875705f2c3447c82d2920b0b6da74eb541e6da44b98e0', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Kristina', 'Vasileva', 'kvasileva@automation.com', 'Mrs.', 'Australia', 'Sydney', 'c6324a4cc2316b5e7e4e68a43154f8c3d0f72e2ac2e7cde7da2fe3c26fe325cb', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Martin', 'Petrov', 'mpetrov@automation.com', 'Mr.', 'Japan', 'Tokyo', '1d3bc8712b8405d0a3ffdc70d89ec3ccfcd19baf53ef2fc26f17a2b30dd216c5', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Iva', 'Todorova', 'itodorova@automation.com', 'Mrs.', 'Brazil', 'Rio de Janeiro', 'b20d049f17a6ee92271d7586c97b14442242820e25dc58446e9cf6c89281c4e5', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Dimitar', 'Nikolov', 'dnikolov@automation.com', 'Mr.', 'Argentina', 'Buenos Aires', 'e3d0c764f6f11c070ee13b82b32d3c8f37647e564b1485a92e5c5f352314e7cb', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Tanya', 'Dimitrova', 'tdimitrova@automation.com', 'Mrs.', 'Russia', 'Moscow', 'e2b7d5a584f30dfae5730919f9b1cf41b35dfad15fd6e890c0948da0d46de14b', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Vladimir', 'Georgiev', 'vgeorgiev@automation.com', 'Mr.', 'India', 'Mumbai', '37413cc9b1145451918b92d80f672f916f17d314b8a92a29e1eae9dc1503bc44', 'uploads/profile_pictures/default_profile.png'),
+(false, 'Eva', 'Pavlova', 'epavlova@automation.com', 'Mrs.', 'China', 'Beijing', '4c3f64c170c09dcfa51224d5b8ff65474e3c20d35a8e5f54399ebeaf91a49bfb', 'uploads/profile_pictures/default_profile.png');
 
 -- Skills Table
 CREATE TABLE IF NOT EXISTS skills (
@@ -142,6 +143,43 @@ VALUES
 (13, 1, 3), (16, 4, 2), (14, 8, 1), (10, 12, 4), (18, 17, 3),
 (14, 2, 3), (15, 5, 2), (13, 9, 1), (21, 13, 3), (19, 18, 5);
 
+CREATE TABLE IF NOT EXISTS cities (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  city_name varchar(100) NOT NULL,
+  country_name varchar(100) NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY unique_city_country (city_name, country_name)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- Insert cities
+INSERT IGNORE INTO cities (city_name, country_name) VALUES
+('Sofia', 'Bulgaria'),
+('Sopot', 'Bulgaria'),
+('Elin Pelin', 'Bulgaria'),
+('Pravets', 'Bulgaria'),
+('Kardjali', 'Bulgaria'),
+('Plovdiv', 'Bulgaria'),
+('Varna', 'Bulgaria'),
+('Burgas', 'Bulgaria'),
+('Pleven', 'Bulgaria'),
+('London', 'UK'),
+('Manchester', 'UK'),
+('Berlin', 'Germany'),
+('Munich', 'Germany'),
+('New York', 'USA'),
+('Los Angeles', 'USA'),
+('Paris', 'France'),
+('Rome', 'Italy'),
+('Madrid', 'Spain'),
+('Lisbon', 'Portugal'),
+('Toronto', 'Canada'),
+('Sydney', 'Australia'),
+('Tokyo', 'Japan'),
+('Rio de Janeiro', 'Brazil'),
+('Buenos Aires', 'Argentina'),
+('Moscow', 'Russia'),
+('Mumbai', 'India'),
+('Beijing', 'China');
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

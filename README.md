@@ -151,5 +151,22 @@ The project uses a microservices architecture with three main services:
 - rest : Python REST API service
 - mysql : Database service
 
-All services are connected through a Docker bridge network named soa-network localy.
+All services are connected through a Docker bridge network named soa-network locally.
 And also the project can be deployed in Azure DevOps.
+
+### Data Storage & Cleanup
+
+- **Profile Pictures:** Stored in the persistent named volume `profile-uploads` (defined in `docker-compose-v2.yml`). This data persists when containers are removed.
+- **Database:** Data is stored within the `db` container and is lost when the container is removed (default test setup).
+
+**To reset the environment completely (remove containers AND the `profile-uploads` volume):**
+```bash
+# Stop and remove containers AND the profile-uploads volume
+docker compose -f docker-compose-v2.yml down --volumes
+```
+*(Note: `docker compose down` without `--volumes` will leave the `profile-uploads` volume intact.)*
+
+**(Optional) To remove unused images:**
+```bash
+docker image prune -a -f
+```

@@ -1,202 +1,301 @@
 import MySQLdb
-from flask import Blueprint, jsonify, request, current_app
+import re
+import os
+from flask import Blueprint, jsonify, request, current_app, send_from_directory, url_for
+from werkzeug.utils import secure_filename
 
 users_bp = Blueprint('users', __name__)
 
-def get_user_by_email(_email):
-    sqlQuery = f"SELECT * FROM users WHERE email = '{_email}'"
+# Configure upload folder
+UPLOAD_FOLDER = '/app/uploads/profile_pictures'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def validate_image(file):
+    """Validate uploaded image file"""
+    if not file:
+        return "No file provided"
+    if not allowed_file(file.filename):
+        return "Invalid file type. Allowed types: png, jpg, jpeg"
+    if len(file.read()) > MAX_FILE_SIZE:
+        file.seek(0)  # Reset file pointer after reading
+        return "File size exceeds 5MB limit"
+    file.seek(0)  # Reset file pointer after reading
+    return None
+
+def validate_city_country(city, country):
+    """Validate if city belongs to the specified country"""
     try:
-        print(f"quering for {sqlQuery}")
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute(sqlQuery)
-        res = cursor.fetchone()
-        print(f"Got result from SQL {sqlQuery} = {res}")
-        return res
+        cursor.execute("SELECT COUNT(*) as count FROM cities WHERE city_name = %s AND country_name = %s", [city, country])
+        result = cursor.fetchone()
+        count = result['count'] if result else 0
+        print(f"Validation result for {city}, {country}: count={count}")
+        return count > 0
     except Exception as e:
-        print(e)
+        print(f"Error validating city-country: {str(e)}")
+        return False
+
+def validate_input(data):
+    """Validate user input according to requirements"""
+    errors = []
+    
+    # Check required fields
+    required_fields = ['first_name', 'sir_name', 'title', 'country', 'email']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            errors.append(f"{field.replace('_', ' ').title()} is required")
+    
+    # Validate field lengths (2-15 characters)
+    for field in ['first_name', 'sir_name', 'title', 'country', 'city']:
+        if field in data and data[field]:
+            if not 2 <= len(data[field]) <= 15:
+                errors.append(f"{field.replace('_', ' ').title()} must be between 2 and 15 characters")
+    
+    # Validate name fields (no special characters)
+    if 'first_name' in data and not re.match(r'^[a-zA-Z\s]+$', data['first_name']):
+        errors.append("First name cannot contain special characters")
+    if 'sir_name' in data and not re.match(r'^[a-zA-Z\s]+$', data['sir_name']):
+        errors.append("Sir name cannot contain special characters")
+    
+    # Validate email format
+    if 'email' in data and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', data['email']):
+        errors.append("Invalid email format")
+    
+    # Validate city-country combination
+    if 'city' in data and 'country' in data and data['city'] and data['country']:
+        if not validate_city_country(data['city'], data['country']):
+            errors.append("City does not belong to the specified country")
+    
+    return errors
+
+def get_user_by_email(_email):
+    try:
+        conn = current_app.mysql.connection
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT * FROM users WHERE email = %s", [_email])
+        user = cursor.fetchone()
+        return user
+    except Exception as e:
+        print(f"Error getting user by email: {str(e)}")
+        return None
 
 def get_user_by_id(_id):
-    sqlQuery = f"SELECT * FROM users WHERE id = {_id}"
     try:
-        print(f"quering for {sqlQuery}")
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute(sqlQuery)
-        res = cursor.fetchone()
-        print(f"Got result from SQL {sqlQuery} = {res}")
-        return res
+        cursor.execute("SELECT * FROM users WHERE id = %s", [_id])
+        user = cursor.fetchone()
+        return user
     except Exception as e:
-        print(e)
+        print(f"Error getting user by id: {str(e)}")
         return None
 
 @users_bp.route('/users', methods=['POST'])
 def add_user():
-    has_oppend_con = False
     try:
         _json = request.json
-        _firstName = _json['first_name']
-        _surName = _json['sir_name']
-        _title = _json['title']
-        _country = _json['country']
-        _city = _json['city']
-        _email = _json['email']
-        _password = _json['password']
-        _isAdmin = _json.get('is_admin', False)
+        if not _json:
+            return jsonify({"message": "No input data provided"}), 400
 
-        if get_user_by_email(_email) is not None :
-            print("User does exist")
-            response = jsonify({"message" : "User with such email already exists"})
-            response.status_code = 418
-            print("returning error")
-            return response
-        else:
-            pass
-            print("User does NOT exist")
+        errors = validate_input(_json)
+        if errors:
+            return jsonify({"message": errors[0] if len(errors) == 1 else errors}), 400
 
-            _city = _city if _city else ""  #allow the bug from UI to process
-        if _firstName and _surName and _title and _country and _email and _password and request.method == 'POST':
-            print("Saving user")
-            sqlQuery = "INSERT INTO users(is_admin, first_name, sir_name, title, country, city, email, password) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
-            bindData = (_isAdmin, _firstName, _surName, _title, _country, _city, _email, _password)
-            conn = current_app.mysql.connection
-            cursor = conn.cursor()
-            cursor.execute(sqlQuery, bindData)
-            conn.commit()
-            created_user = jsonify(get_user_by_email(_email))
-            response = created_user
-            response.status_code = 200
-            return response
-        else:
-            return not_found()
+        if get_user_by_email(_json['email']):
+            return jsonify({"message": "User with such email already exists"}), 409
+
+        sqlQuery = """INSERT INTO users(is_admin, first_name, sir_name, title, country, 
+                   city, email, password) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"""
+        bindData = (_json.get('is_admin', False), _json['first_name'], _json['sir_name'],
+                   _json['title'], _json['country'], _json.get('city', ''),
+                   _json['email'], _json['password'])
+        
+        conn = current_app.mysql.connection
+        cursor = conn.cursor()
+        cursor.execute(sqlQuery, bindData)
+        conn.commit()
+        
+        return jsonify(get_user_by_email(_json['email'])), 200
+    except KeyError as e:
+        return jsonify({"message": f"Missing required field: {str(e)}"}), 400
     except Exception as e:
-        print(e)
+        print(f"Error adding user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
+
+@users_bp.route('/login', methods=['POST'])
+def login():
+    try:
+        _json = request.json
+        if not _json.get('email') or not _json.get('password'):
+            return jsonify({"message": "Email and password are required"}), 400
+
+        conn = current_app.mysql.connection
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT * FROM users WHERE email = %s AND password = %s", 
+                      [_json['email'], _json['password']])
+        
+        user = cursor.fetchone()
+        if not user:
+            return jsonify({"message": "Invalid email or password"}), 401
+        
+        return jsonify(user), 200
+    except Exception as e:
+        print(f"Error during login: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
+
+@users_bp.route('/users/<int:id>/profile-picture', methods=['POST'])
+def upload_profile_picture(id):
+    try:
+        # Check if user exists
+        user = get_user_by_id(id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+
+        if 'file' not in request.files:
+            return jsonify({"message": "No file part"}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"message": "No selected file"}), 400
+
+        # Validate image
+        error = validate_image(file)
+        if error:
+            return jsonify({"message": error}), 400
+
+        # Create secure filename with user ID
+        filename = f"{id}_{secure_filename(file.filename)}"
+        
+        # Ensure upload directory exists
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        
+        # Save file
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+        
+        # Update user's profile picture in database
+        full_path = f"uploads/profile_pictures/{filename}" # Construct the full path
+        conn = current_app.mysql.connection
+        cursor = conn.cursor()
+        # Store the full path in the database
+        cursor.execute("UPDATE users SET profile_picture = %s WHERE id = %s", (full_path, id)) 
+        conn.commit()
+        
+        return jsonify({
+            "message": "Profile picture uploaded successfully",
+            # Return the full path in the response
+            "profile_picture": full_path 
+        }), 200
+
+    except Exception as e:
+        print(f"Error uploading profile picture: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.route('/users/<int:id>', methods=['PUT'])
 def update_user(id):
     try:
         _json = request.json
-        _firstName = _json['first_name']
-        _surName = _json['sir_name']
-        _title = _json['title']
-        _email = _json['email']
-        _country = _json['country']
-        _city = _json['city']
+        errors = validate_input(_json)
+        if errors:
+            return jsonify({"errors": errors}), 400
 
-        esixting_user = get_user_by_email(_email)
-        if esixting_user is not None and esixting_user['id'] != id :
-            print("User does exist")
-            response = jsonify({"message" : "User with such email already exists"})
-            response.status_code = 418
-            print("returning error")
-            return response
-        else:
-            pass
-            print("User does NOT exist")
+        existing_user = get_user_by_email(_json['email'])
+        if existing_user and existing_user['id'] != id:
+            return jsonify({"message": "Email already in use"}), 409
 
-        # validate the received values
-        if _firstName and _surName and _title and _country and _email and _city and request.method == 'PUT':
-            sqlQuery = "UPDATE users SET first_name=%s, sir_name=%s, title=%s, email=%s, country=%s, city=%s WHERE id=%s"
-            bindData = (_firstName, _surName, _title, _email, _country, _city, id)
-            conn = current_app.mysql.connection
-            cursor = conn.cursor()
-            cursor.execute(sqlQuery, bindData)
-            conn.commit()
-            response = jsonify(get_user_by_id(id))
-            response.status_code = 200
-            return response
-        else:
-            return not_found()
+        sqlQuery = """UPDATE users SET first_name=%s, sir_name=%s, title=%s, 
+                     email=%s, country=%s, city=%s, profile_picture=%s WHERE id=%s"""
+        bindData = (_json['first_name'], _json['sir_name'], _json['title'],
+                   _json['email'], _json['country'], _json.get('city', ''),
+                   _json.get('profile_picture'), id)
+        
+        conn = current_app.mysql.connection
+        cursor = conn.cursor()
+        cursor.execute(sqlQuery, bindData)
+        conn.commit()
+        
+        return jsonify(get_user_by_id(id)), 200
     except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error updating user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.route('/users', methods=['GET'])
 def list_users():
     try:
-        order_by = request.args.get('order_by')
-        orientation = request.args.get('orientation')
+        order_by = request.args.get('orderBy')
+        sort = request.args.get('sort', 'asc')
+        
+        # Validate order_by parameter to prevent SQL injection
+        valid_columns = ['first_name', 'sir_name', 'email', 'country', 'city', 'title']
+        if order_by and order_by not in valid_columns:
+            return jsonify({"message": "Invalid sort column"}), 400
+        
+        # Validate sort parameter
+        if sort.lower() not in ['asc', 'desc']:
+            return jsonify({"message": "Invalid sort direction"}), 400
         
         conn = current_app.mysql.connection
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        sqlQuery = ""
-        if order_by is None:
-            print ("retrieving not ordered users")
-            sqlQuery = "SELECT * FROM users"
-        else:
-            orientation = "ASC" if orientation is None else orientation
-            sqlQuery = "SELECT * FROM users WHERE is_admin = false ORDER BY %s %s" % (order_by, orientation)
-            print ("retrieving users ordered by " + order_by + " and orientation " + orientation)
         
-        print("Running SQL " + sqlQuery)   
-        cursor.execute(sqlQuery)
-
-        usersRows = cursor.fetchall()
-        respone = jsonify(usersRows)
-        respone.status_code = 200
-        return respone
+        if order_by:
+            sqlQuery = f"SELECT * FROM users ORDER BY {order_by} {sort}"
+            cursor.execute(sqlQuery)
+        else:
+            cursor.execute("SELECT * FROM users")
+        
+        users = cursor.fetchall()
+        return jsonify(users), 200
     except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error listing users: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.route('/users/<int:id>', methods=['GET'])
 def get_user(id):
     try:
-        conn = current_app.mysql.connection
-        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute(f"SELECT * FROM users WHERE id = {id} limit 1")
-        empRow = cursor.fetchone()
-        response = jsonify(empRow)
-        response.status_code = 200
-        return response
+        user = get_user_by_id(id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        return jsonify(user), 200
     except Exception as e:
-        print(e)
-
-@users_bp.route('/login', methods=['POST'])
-def login():
-    try:
-        print("Enter login method")
-        _json = request.json
-        
-        _email = _json['email']
-        _password = _json['password']
-        conn = current_app.mysql.connection
-        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT * FROM users WHERE email = %s AND password = %s limit 1", [_email, _password])
-        print("My SQL queried with " + _email + " and " + _password)
-        
-        if cursor.rowcount < 1 :
-            response = jsonify({"message" : "Invalid user or email"})
-            response.status_code = 401
-            return response
-       
-        empRow = cursor.fetchone()
-        response = jsonify(empRow)
-        response.status_code = 200
-        return response
-    except Exception as e:
-        print(e)
+        print(f"Error getting user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
 
 @users_bp.route('/users/<int:id>', methods=['DELETE'])
 def delete_user(id):
     try:
+        user = get_user_by_id(id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+            
         conn = current_app.mysql.connection
         cursor = conn.cursor()
-        cursor.execute(f"DELETE FROM users WHERE id ={id}")
+        cursor.execute("DELETE FROM users WHERE id = %s", [id])
         conn.commit()
-        response = jsonify('User deleted successfully!')
-        response.status_code = 200
-        return response
+        return jsonify({"message": "User deleted successfully"}), 200
     except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 500
-        
+        print(f"Error deleting user: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
+
+@users_bp.route('/cities/<country_name>', methods=['GET'])
+def get_cities_by_country(country_name):
+    try:
+        conn = current_app.mysql.connection
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT city_name FROM cities WHERE country_name = %s", [country_name])
+        cities = cursor.fetchall()
+        return jsonify([city['city_name'] for city in cities]), 200
+    except Exception as e:
+        print(f"Error getting cities: {str(e)}")
+        return jsonify({"message": "Internal server error"}), 500
+
 @users_bp.errorhandler(404)
 def not_found(error=None):
-    message = {
+    return jsonify({
         'status': 404,
-        'message': 'Record not found: ' + request.url,
-    }
-    response = jsonify(message)
-    response.status_code = 404
-    return response
+        'message': 'Resource not found: ' + request.url
+    }), 404

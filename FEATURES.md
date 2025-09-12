@@ -28,7 +28,8 @@ I want to register.
 4. All input fields must have a **minimum of 2 characters** and a **maximum of 15 characters**.
 5. The user must agree to the **Terms of Service** to complete registration.
 6. **First Name** and **Sir Name** must not accept special symbols.
-7. If any required information is missing, an **error message** should be displayed.
+7. **Sir Name** must allow dash symbol.
+8. If any required information is missing, an **error message** should be displayed.
 
 ## Login
 ### Description

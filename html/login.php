@@ -2,6 +2,7 @@
 ob_start();
 session_start();
 require_once 'api_client.php';
+require_once 'security.php';
 
 // Initialize variables
 $email = '';
@@ -10,29 +11,34 @@ $passError = '';
 $errMSG = '';
 
 if (isset($_POST['btn-login'])) {
-    $infoMSG = "Entered Login";
-    $email = $_POST['email'];
-    $upass = $_POST['pass'];
+    $email = sanitize_input($_POST['email']);
+    $upass = $_POST['pass']; // Don't sanitize password
 
-    $password = hash('sha256', $upass); // password hashing using SHA256
-    $payload = [
-        "email" => $email,
-        "password" => $password
-    ];
-
-    $json_payload = json_encode($payload);
-    $api_result = CallAPI("POST", "/login", $json_payload);
-    $response = json_decode($api_result);
-
-    if ($response === null) {
-        $errMSG = "Unable to connect to the login service. Please try again later.";
-    } elseif (property_exists($response, "message")) {
-        $errMSG = $response->message;
+    if (!validate_email($email)) {
+        $emailError = "Invalid email format";
+    } elseif (!validate_password($upass)) {
+        $passError = "Password must be at least 6 characters";
     } else {
-        $_SESSION['user'] = $response->id;
-        $_SESSION['is_admin'] = $response->is_admin;
-        header("Location: index.php");
-        exit;
+        $password = hash('sha256', $upass);
+        $payload = [
+            "email" => $email,
+            "password" => $password
+        ];
+
+        $json_payload = json_encode($payload);
+        $api_result = CallAPI("POST", "/login", $json_payload);
+        $response = json_decode($api_result);
+
+        if ($response === null) {
+            $errMSG = "Unable to connect to the login service. Please try again later.";
+        } elseif (property_exists($response, "message")) {
+            $errMSG = $response->message;
+        } else {
+            $_SESSION['user'] = $response->id;
+            $_SESSION['is_admin'] = $response->is_admin;
+            header("Location: index.php");
+            exit();
+        }
     }
 }
 ?>
@@ -66,8 +72,7 @@ if (isset($_POST['btn-login'])) {
     <div class="login-container">
         <h2 class="text-center mb-4">Login</h2>
         
-        <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" autocomplete="off">
-        
+        <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>" autocomplete="off">
             <?php if (isset($errMSG) && !empty($errMSG)): ?>
                 <div class="alert alert-danger mb-3"><?php echo $errMSG; ?></div>
             <?php endif; ?>
@@ -76,7 +81,8 @@ if (isset($_POST['btn-login'])) {
                 <label for="email" class="form-label">Email</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                    <input type="email" name="email" class="form-control" placeholder="Your Email" value="<?php echo htmlspecialchars($email); ?>" required>
+                    <input type="email" name="email" class="form-control" placeholder="Your Email" 
+                           value="<?php echo $email; ?>" required>
                 </div>
                 <?php if (!empty($emailError)): ?>
                     <span class="text-danger"><?php echo $emailError; ?></span>

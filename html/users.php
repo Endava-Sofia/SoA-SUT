@@ -59,8 +59,8 @@
         $loged_in_user = json_decode($rest_response);
         
         $url_params = [
-            "order_by" => isset($_POST['column']) ? $_POST['column'] : 'title',
-            "orientation" => isset($_POST['order']) ? $_POST['order'] : 'ASC'
+            "orderBy" => isset($_POST['column']) ? $_POST['column'] : 'title',
+            "sort" => isset($_POST['order']) ? strtolower($_POST['order']) : 'asc'
         ];
 
         $rest_response = CallAPI("GET", "/users", $url_params);
@@ -69,14 +69,25 @@
         $html = '';
         foreach ($users as $user) {
             $html .= "<tr>";
-            $html .= "<td>{$user->title}</td>";
-            $html .= "<td>{$user->first_name}</td>";
-            $html .= "<td>{$user->sir_name}</td>";
-            $html .= "<td>{$user->country}</td>";
-            $html .= "<td>{$user->city}</td>";
-            $html .= "<td>{$user->email}</td>";
+            $html .= "<td>";
+            $profile_picture_path = isset($user->profile_picture) ? $user->profile_picture : 'uploads/profile_pictures/default_profile.png';
+            
+            // Use the default path if the user path is empty or explicitly the default one
+            if (empty($profile_picture_path) || $profile_picture_path === 'uploads/profile_pictures/default_profile.png') {
+                 $html .= "<img src='uploads/profile_pictures/default_profile.png' class='user-avatar' alt='Default Profile Picture'>";
+            } else {
+                 // Use the user-specific picture if it exists and is not the default path
+                 $html .= "<img src='" . htmlspecialchars($profile_picture_path) . "' class='user-avatar' alt='Profile Picture'>";
+            }
+            
+            $html .= htmlspecialchars($user->title) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user->first_name) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user->sir_name) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user->country) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user->city) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user->email) . "</td>";
             if ($loged_in_user->is_admin) {
-                $html .= "<td><a href='delete_user.php?id={$user->id}' onclick=\"return confirm('Are you SURE you want to delete {$user->first_name} {$user->sir_name}? ')\">delete</a></td>";
+                $html .= "<td><a href='delete_user.php?id=" . htmlspecialchars($user->id) . "' onclick=\"return confirm('Are you SURE you want to delete " . htmlspecialchars($user->first_name . ' ' . $user->sir_name) . "? ')\">delete</a></td>";
             }
             $html .= "</tr>";
         }
@@ -101,17 +112,43 @@
 
     // Get the result...
     $url_params = [
-        "order_by" => $column,
-        "orientation" => $sort_order
+        "orderBy" => $column,
+        "sort" => strtolower($sort_order)
     ];
 
-    if  ($rest_response = CallAPI("GET","/users", $url_params)) {
-        // Some variables we need for the table.
-        $available_users = json_decode($rest_response);
-        $up_or_down = str_replace(array('ASC','DESC'), array('by-attributes','by-attributes-alt'), $sort_order); 
-        $asc_or_desc = $sort_order == 'ASC' ? 'desc' : 'asc';
-        $add_class = ' class="highlight"';
-    
+    $available_users = [];
+    $error_message = '';
+
+    if ($rest_response = CallAPI("GET","/users", $url_params)) {
+        // Check if response is an error message from the API client
+        $error_check = json_decode($rest_response);
+        if (isset($error_check->error)) {
+            $error_message = "API Error: " . htmlspecialchars($error_check->error);
+        } else {
+            $decoded_response = json_decode($rest_response);
+            
+            // Debug information
+            error_log("API Response: " . print_r($rest_response, true));
+            error_log("Decoded Response Type: " . gettype($decoded_response));
+            error_log("Decoded Response: " . print_r($decoded_response, true));
+            
+            // Check if decode was successful
+            if ($decoded_response === null) {
+                $error_message = "Error: JSON decode failed - " . json_last_error_msg();
+            }
+            // Check if response is array or object
+            else if (is_object($decoded_response) || is_array($decoded_response)) {
+                // Convert object to array if needed
+                $available_users = is_object($decoded_response) ? [$decoded_response] : $decoded_response;
+                $up_or_down = str_replace(array('ASC','DESC'), array('by-attributes','by-attributes-alt'), $sort_order); 
+                $asc_or_desc = $sort_order == 'ASC' ? 'desc' : 'asc';
+                $add_class = ' class="highlight"';
+            } else {
+                $error_message = "Error: Unexpected response format - " . gettype($decoded_response);
+            }
+        }
+    } else {
+        $error_message = "Error: Unable to connect to the user service.";
     }
 ?>
 
@@ -126,6 +163,27 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .navbar-profile-picture {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 8px;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation Bar-->
@@ -150,11 +208,18 @@
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person"></i> Logged in: <?php echo $loged_in_user->email; ?>
+                            <?php if (isset($loged_in_user->profile_picture) && $loged_in_user->profile_picture): ?>
+                                <img src="<?php echo htmlspecialchars($loged_in_user->profile_picture); ?>" 
+                                     class="navbar-profile-picture" alt="Profile Picture">
+                            <?php else: ?>
+                                <img src="uploads/profile_pictures/default_profile.png" 
+                                     class="navbar-profile-picture" alt="Default Profile Picture">
+                            <?php endif; ?>
+                            <?php echo $loged_in_user->email; ?>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                             <li><a class="dropdown-item" href="user_profile.php"><i class="bi bi-person"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -175,6 +240,13 @@
                 </div>
 
                 <div class="table-responsive">
+                    <?php if (!empty($error_message)): ?>
+                        <div class="alert alert-danger" role="alert">
+                            <?php echo htmlspecialchars($error_message); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (empty($error_message)): ?>
                     <table id="users_list" class="table table-striped table-hover">
                         <thead>
                             <tr>
@@ -220,27 +292,45 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($available_users as &$user): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($user->title); ?></td>
-                                    <td><?php echo htmlspecialchars($user->first_name); ?></td>
-                                    <td><?php echo htmlspecialchars($user->sir_name); ?></td>
-                                    <td><?php echo htmlspecialchars($user->country); ?></td>
-                                    <td><?php echo htmlspecialchars($user->city); ?></td>
-                                    <td><?php echo htmlspecialchars($user->email); ?></td>
-                                    <?php if ($loged_in_user->is_admin): ?>
+                            <?php if (!empty($available_users)): ?>
+                                <?php foreach ($available_users as $user): ?>
+                                    <?php if (is_object($user)): ?>
+                                    <tr>
                                         <td>
-                                            <a href="delete_user.php?id=<?php echo $user->id; ?>" 
-                                               class="text-danger"
-                                               onclick="return confirm('Are you SURE you want to delete <?php echo htmlspecialchars($user->first_name . ' ' . $user->sir_name); ?>?')">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </a>
+                                            <?php if (isset($user->profile_picture) && $user->profile_picture): ?>
+                                                <img src="<?php echo htmlspecialchars($user->profile_picture); ?>" 
+                                                     class="user-avatar" alt="Profile Picture">
+                                            <?php else: ?>
+                                                <img src="uploads/profile_pictures/default_profile.png" 
+                                                     class="user-avatar" alt="Default Profile Picture">
+                                            <?php endif; ?>
+                                            <?php echo htmlspecialchars($user->title); ?>
                                         </td>
+                                        <td><?php echo htmlspecialchars($user->first_name ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->sir_name ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->country ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->city ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($user->email ?? ''); ?></td>
+                                        <?php if ($loged_in_user->is_admin): ?>
+                                            <td>
+                                                <a href="delete_user.php?id=<?php echo htmlspecialchars($user->id ?? ''); ?>" 
+                                                   class="text-danger"
+                                                   onclick="return confirm('Are you SURE you want to delete <?php echo htmlspecialchars(($user->first_name ?? '') . ' ' . ($user->sir_name ?? '')); ?>?')">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </a>
+                                            </td>
+                                        <?php endif; ?>
+                                    </tr>
                                     <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="<?php echo $loged_in_user->is_admin ? '7' : '6'; ?>" class="text-center">No users found</td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

@@ -14,6 +14,9 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - soa-network
+    environment:
+      - MYSQL_ROOT_PASSWORD=pass
+      - MYSQL_DATABASE=db
 
   www:
       container_name: www
@@ -21,6 +24,8 @@ services:
       image: soa-www
       ports:
         - "8080:80"
+      volumes:
+        - profile-uploads:/var/www/html/uploads/profile_pictures
       networks:
         - soa-network
 
@@ -30,6 +35,8 @@ services:
       image: soa-api
       ports:
         - "5000:5000"
+      volumes:
+        - profile-uploads:/app/uploads/profile_pictures
       networks:
         - soa-network
 
@@ -39,3 +46,4 @@ networks:
 
 volumes:
   mysql_data:
+  profile-uploads:
